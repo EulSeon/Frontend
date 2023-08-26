@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "paths": {
+      "@apis/*": ["apis/*"],
+      "@components/*": ["components/*"],
+      "@hooks/*": ["hooks/*"],
+      "@interfaces/*": ["interfaces/*"],
+      "@lib/*": ["lib/*"],
+      "@pages/*": ["pages/*"],
+      "@utils/*": ["utils/*"]
+    },
+    "outDir": "./dist",
+    "allowJs": true, // JS 파일 허용
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es2016",
+    "lib": ["dom", "dom.iterable", "esnext", "ES2016"],
+    "jsx": "react-jsx",
+    "module": "commonjs",
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true
+  },
+  "extends": "./tsconfig.paths.json"
+  // "include": ["./src"],
+  // "exclude": ["node_modules", "build"]
+}
