@@ -1,10 +1,12 @@
 import { createGlobalStyle } from 'styled-components';
+import '../static/fonts/Font.css';
 
 const GlobalStyle = createGlobalStyle`
   *, *::before, *::after {
     box-sizing: border-box;
     padding: 0;
     margin: 0;
+    font-family: SUIT;
   }
 
   input {
