@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { styled } from 'styled-components';
 
@@ -121,7 +122,7 @@ const SelectBtn = styled.button<{ visible: boolean }>`
 
     // select 화살표
     & > img {
-      transform: rotate(${(props) => (props.type ? '180deg' : '0deg')});
+      transform: rotate(${(props) => (props.visible ? '180deg' : '0deg')});
       transition: all, 0.5s;
     }
   }
