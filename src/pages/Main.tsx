@@ -1,9 +1,27 @@
 import React from 'react';
 import { styled } from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import Header_ from '@components/common/header';
 import Footer from '@components/common/footer';
+import { getGameRoomPassword } from '@apis/api/game';
 
 function Main_() {
+  const navigate = useNavigate();
+
+  const onClickCreateRoomBtn = async () => {
+    // 게임방 비밀번호 요청
+    // 비밀번호를 성공적으로 받으면 게임 대기방으로 이동
+    const password = await getGameRoomPassword();
+
+    if (password.status !== 200) {
+      // 패스워드가 제대로 전달되지 않았을 경우
+      alert(password.message);
+      return;
+    }
+
+    navigate('/room/wait');
+  };
+
   return (
     <MainLayout>
       <Header_ />
@@ -15,7 +33,7 @@ function Main_() {
           <br />
           모의주식 서비스 E - STOCK 입니다.
         </p>
-        <CreateRoomBtn>
+        <CreateRoomBtn onClick={onClickCreateRoomBtn}>
           <div>
             <img src="/icons/add_icon.svg" alt="방만들기 아이콘" />
             <p>Create New Room</p>
