@@ -57,10 +57,7 @@ const Main = styled.main`
 `;
 
 const BackgroundImage = styled.img`
-  /* min-height: 100vh; */
-  /* max-width: 1920px; */
-  /* height: 100%; */
-  /* width: 100%; */
+  width: 100%;
   position: absolute;
   top: 50%;
   left: 50%;
@@ -76,6 +73,7 @@ const Logo = styled.img`
 const CreateRoomBtn = styled.button`
   background: none;
   align-self: center;
+  cursor: pointer;
 
   & > div {
     display: flex;
