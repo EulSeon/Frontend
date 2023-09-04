@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http:// ??? '; // 나중에 백엔드 주소 가져오기
+const BASE_URL = process.env.REACT_APP_BackEndUrl;
 
 const defaultApi = axios.create({
   baseURL: BASE_URL,

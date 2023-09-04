@@ -1,24 +1,36 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
 
 function WaitingRoom() {
+  const { state } = useLocation();
+
+  // Main페이지에서 넘어온 roomPW
+  console.log(state.roomPW);
+
   return (
     <WaitingRoomLayout>
       <Header_ />
       <WaitingRoomList>
         <ListLayout_ title="방 설정" src="/icons/room_icon.svg">
           <SelectList>
-            <Select_ title="라운드" set={{ start: 5, count: 6, standard: 1 }} />
+            <Select_
+              title="라운드"
+              set={{ start: 5, count: 6, standard: 1 }}
+              defaultValue="Select"
+            />
             <Select_
               title="제한시간"
               set={{ start: 30, count: 20, standard: 30 }}
+              defaultValue="Select"
             />
             <Select_
               title="시드머니"
               set={{ start: 100, count: 19, standard: 50 }}
+              defaultValue="Select"
             />
           </SelectList>
 

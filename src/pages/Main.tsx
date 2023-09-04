@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { styled } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import Footer from '@components/common/footer';
 import { getGameRoomPassword } from '@apis/api/game';
@@ -11,15 +12,15 @@ function Main_() {
   const onClickCreateRoomBtn = async () => {
     // 게임방 비밀번호 요청
     // 비밀번호를 성공적으로 받으면 게임 대기방으로 이동
-    const password = await getGameRoomPassword();
+    const roomPW = await getGameRoomPassword();
 
-    if (password.status !== 200) {
+    if (roomPW.status !== 200 || roomPW.data.status !== 'success') {
       // 패스워드가 제대로 전달되지 않았을 경우
-      alert(password.message);
+      alert('다시 시도해주세요.');
       return;
     }
 
-    navigate('/room/wait');
+    navigate('/room/wait', { state: { roomPW: roomPW.data.room_code } });
   };
 
   return (
