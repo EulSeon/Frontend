@@ -11,14 +11,20 @@ function WaitingRoom() {
       <WaitingRoomList>
         <ListLayout_ title="방 설정" src="/icons/room_icon.svg">
           <SelectList>
-            <Select_ title="라운드" set={{ start: 5, count: 6, standard: 1 }} />
+            <Select_
+              title="라운드"
+              set={{ start: 5, count: 6, standard: 1 }}
+              defaultValue="라운드"
+            />
             <Select_
               title="제한시간"
               set={{ start: 30, count: 20, standard: 30 }}
+              defaultValue="~분 ~초"
             />
             <Select_
               title="시드머니"
               set={{ start: 100, count: 19, standard: 50 }}
+              defaultValue="만원"
             />
           </SelectList>
 
