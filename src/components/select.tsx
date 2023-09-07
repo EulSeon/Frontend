@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { styled } from 'styled-components';
+import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 
 interface SelectProps {
   title?: string;
@@ -9,12 +10,24 @@ interface SelectProps {
     count: number;
     standard: number;
   };
+  defaultValue: string;
 }
 
-function Select_({ title, set: { start, count, standard } }: SelectProps) {
+function Select_({
+  title,
+  set: { start, count, standard },
+  defaultValue,
+}: SelectProps) {
   const selectRef = useRef<HTMLDivElement>(null);
   const [selectedVisible, setSelectedVisible] = useState(false);
-  const [selected, setSelected] = useState<string>('Select');
+  const [selected, setSelected] = useState<string>(
+    defaultValue ? defaultValue : ''
+  ); // 선택된 option
+  const [currentSelectedVal, setCurrentSelectedVal] = useState<
+    number | undefined
+  >(undefined); // 선택된 option의 실제로 사용될 값
+
+  console.log('현재 선택된 값:', currentSelectedVal);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -33,9 +46,13 @@ function Select_({ title, set: { start, count, standard } }: SelectProps) {
   }, [selectRef]);
 
   // select 선택했을 경우 해당 값으로 변경
-  const onClickSelectValue = (e: React.MouseEvent<HTMLLIElement>) => {
+  const onClickSelectValue = (
+    e: React.MouseEvent<HTMLLIElement>,
+    value: number
+  ) => {
     const { innerText } = e.target as HTMLLIElement;
     setSelected(innerText);
+    setCurrentSelectedVal(value);
     setSelectedVisible(false);
   };
 
@@ -57,10 +74,36 @@ function Select_({ title, set: { start, count, standard } }: SelectProps) {
         <SelectOptions visible={selectedVisible}>
           <Options visible={selectedVisible}>
             {new Array(count).fill(0).map((_, index) => {
+              const value = start + standard * index;
+              let minute = '0';
+              let seconds = '0';
+              if (title === '제한시간') {
+                const { min, sec } = convertSecondsToMinute(value);
+                minute = min;
+                seconds = sec;
+              }
               return (
-                <li key={index} onClick={onClickSelectValue}>
-                  {start + standard * index}
-                </li>
+                <>
+                  {title === '제한시간' ? (
+                    <li
+                      key={index}
+                      onClick={(e: any) => {
+                        onClickSelectValue(e, value);
+                      }}
+                    >
+                      {minute + ':' + seconds}
+                    </li>
+                  ) : (
+                    <li
+                      key={index}
+                      onClick={(e: any) => {
+                        onClickSelectValue(e, value);
+                      }}
+                    >
+                      {value}
+                    </li>
+                  )}
+                </>
               );
             })}
           </Options>
@@ -105,7 +148,6 @@ const SelectBtn = styled.button<{ visible: boolean }>`
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 32px;
     padding: 5px 16px;
     width: 132px;
     height: 30px;
@@ -118,6 +160,7 @@ const SelectBtn = styled.button<{ visible: boolean }>`
     & > p {
       text-align: left;
       width: 100%;
+      white-space: nowrap;
     }
 
     // select 화살표
