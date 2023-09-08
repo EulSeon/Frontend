@@ -1,5 +1,6 @@
 import React from 'react';
 import { styled } from 'styled-components';
+import { Link } from 'react-router-dom';
 
 function Header_() {
   return (
@@ -7,9 +8,9 @@ function Header_() {
       <Header>
         <img src="/images/signatureLogo.svg" />
         <Navbar>
-          <p>HOME</p>
-          <p>ABOUT</p>
-          <p>CONTACT</p>
+          <Link to="/">HOME</Link>
+          <Link to="/">ABOUT</Link>
+          <Link to="/">CONTACT</Link>
         </Navbar>
       </Header>
     </HeaderLayout>
@@ -36,13 +37,16 @@ const Navbar = styled.nav`
   flex-direction: row;
   justify-content: space-between;
   width: 361px;
-  color: #ffffff;
 
-  & > p {
+  & > a {
+    color: #ffffff;
     font-size: 1.6rem;
     font-style: normal;
     font-weight: 400;
     line-height: normal;
+    text-decoration: none;
+    z-index: 1;
+    cursor: pointer;
   }
 `;
 
