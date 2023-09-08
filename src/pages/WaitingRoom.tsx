@@ -8,43 +8,66 @@ function WaitingRoom() {
   return (
     <WaitingRoomLayout>
       <Header_ />
-      <WaitingRoomList>
-        <ListLayout_ title="방 설정" src="/icons/room_icon.svg">
-          <SelectList>
-            <Select_
-              title="라운드"
-              set={{ start: 5, count: 6, standard: 1 }}
-              defaultValue="라운드"
-            />
-            <Select_
-              title="제한시간"
-              set={{ start: 30, count: 20, standard: 30 }}
-              defaultValue="~분 ~초"
-            />
-            <Select_
-              title="시드머니"
-              set={{ start: 100, count: 19, standard: 50 }}
-              defaultValue="만원"
-            />
-          </SelectList>
+      <Main>
+        <WaitingRoomList>
+          <ListLayout_
+            title="방 설정"
+            src="/icons/room_icon.svg"
+            buttonInfo={{
+              button1: {
+                value: 'PASSWORD',
+                onClick: () => {
+                  console.log('PASSWORD 버튼 클릭');
+                },
+              },
+            }}
+          >
+            <SelectList>
+              <Select_
+                title="라운드"
+                set={{ start: 5, count: 6, standard: 1 }}
+                defaultValue="라운드"
+              />
+              <Select_
+                title="제한시간"
+                set={{ start: 30, count: 20, standard: 30 }}
+                defaultValue="~분 ~초"
+              />
+              <Select_
+                title="시드머니"
+                set={{ start: 100, count: 19, standard: 50 }}
+                defaultValue="만원"
+              />
+            </SelectList>
 
-          <ListImage src="/images/roomsettingImage.svg" />
-        </ListLayout_>
-        <ListLayout_ title="참여인원" src="/icons/participant_icon.svg">
-          <UserList>
-            {new Array(40).fill(0).map((x, index) => {
-              return (
-                <UserProfile key={index}>
-                  <img src="/images/defaultProfile.svg" />
-                  <p key={x}>김태하</p>
-                </UserProfile>
-              );
-            })}
-          </UserList>
-
-          <ListImage2 src="/images/participantImage.svg" />
-        </ListLayout_>
-      </WaitingRoomList>
+            <ListImage src="/images/roomsettingImage.svg" />
+          </ListLayout_>
+          <ListLayout_
+            title="참여인원"
+            src="/icons/participant_icon.svg"
+            buttonInfo={{
+              button1: {
+                value: 'GAME START',
+                onClick: () => {
+                  console.log('GAME START 버튼 클릭');
+                },
+              },
+            }}
+          >
+            <UserList>
+              {new Array(40).fill(0).map((x, index) => {
+                return (
+                  <UserProfile key={index}>
+                    <img src="/images/defaultProfile.svg" />
+                    <p key={x}>김태하</p>
+                  </UserProfile>
+                );
+              })}
+            </UserList>
+            <ListImage2 src="/images/participantImage.svg" />
+          </ListLayout_>
+        </WaitingRoomList>
+      </Main>
     </WaitingRoomLayout>
   );
 }
@@ -57,6 +80,12 @@ const WaitingRoomLayout = styled.main`
   background: linear-gradient(120deg, #3f51b5, #00bbd4 100%);
   position: relative;
   overflow: hidden;
+`;
+
+const Main = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
 `;
 
 const WaitingRoomList = styled.div`
@@ -123,6 +152,7 @@ const ListImage2 = styled.img`
   position: absolute;
   bottom: 91px;
   opacity: 0.3;
+  pointer-events: none;
 `;
 
 export default WaitingRoom;
