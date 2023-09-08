@@ -1,12 +1,34 @@
-import React from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useRef, useState } from 'react';
 import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
 
 function WaitingRoom() {
+  const pwRef = useRef<any>(null);
+  const [pwVisible, setPwVisible] = useState(false);
+
+  useEffect(() => {
+    // 패스워드를 제외한 백그라운드를 클릭했을 경우 패스워드 사라지도록 설정
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (!pwRef.current || !pwRef.current.contains(e.target)) {
+        setPwVisible(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick, true);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick, true);
+    };
+  }, [pwRef]);
+
   return (
     <WaitingRoomLayout>
+      <BlackBackground visible={pwVisible}>
+        <PassWord ref={pwRef}>
+          <p>123456</p>
+        </PassWord>
+      </BlackBackground>
       <Header_ />
       <Main>
         <WaitingRoomList>
@@ -17,7 +39,7 @@ function WaitingRoom() {
               button1: {
                 value: 'PASSWORD',
                 onClick: () => {
-                  console.log('PASSWORD 버튼 클릭');
+                  setPwVisible(true);
                 },
               },
             }}
@@ -153,6 +175,40 @@ const ListImage2 = styled.img`
   bottom: 91px;
   opacity: 0.3;
   pointer-events: none;
+`;
+
+const BlackBackground = styled.div<{ visible: boolean }>`
+  /* display: flex; */
+  display: ${(props) => (props.visible ? 'flex' : 'none')};
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100%;
+  min-width: 1280px;
+  min-height: 100vh;
+  background-color: rgba(0, 0, 0, 0.36);
+  position: absolute;
+  z-index: 2;
+`;
+
+const PassWord = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 720px;
+  height: 240px;
+  border-radius: 24px;
+  background: #ffffff;
+
+  & > p {
+    color: #000000;
+    font-size: 6.4rem;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    letter-spacing: 51.2px; // 마지막 글자에도 간격 처리 됨.
+    text-indent: 51.2px; // 따라서 들여쓰기 기능 추가
+  }
 `;
 
 export default WaitingRoom;

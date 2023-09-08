@@ -76,6 +76,10 @@ const Button = styled.button`
   -webkit-transition: background, 0.3s;
   transition: background, 0.3s;
 
+  &:focus {
+    background-color: #a7c2e4;
+  }
+
   &:hover {
     border-radius: 25px;
     background: #a7c2e4;
