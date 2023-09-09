@@ -4,31 +4,82 @@ import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
+import { useNavigate } from 'react-router-dom';
 
 function WaitingRoom() {
+  const navigate = useNavigate();
   const pwRef = useRef<any>(null);
-  const [pwVisible, setPwVisible] = useState(false);
+  const [visible, setVisible] = useState<boolean>(false); // 팝업창 visible
+  const [currentBtn, setCurrentBtn] = useState<string>(''); // 현재 선택된 버튼
 
+  const onClickBlackBackground = (e: any) => {
+    if (
+      // 현재 클릭한 버튼이 패스워드일 경우에만, 바탕을 클릭했을 때 사라지도록 설정
+      currentBtn === 'password' &&
+      (!pwRef.current || !pwRef.current.contains(e.target))
+    ) {
+      setVisible(false);
+    }
+  };
+
+  const [time, setTime] = useState(5); // 일단 임시로 시간 설정
+
+  // 타이머 만들기는 했지만 아직 고민해야할 부분이 많음.
   useEffect(() => {
-    // 패스워드를 제외한 백그라운드를 클릭했을 경우 패스워드 사라지도록 설정
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (!pwRef.current || !pwRef.current.contains(e.target)) {
-        setPwVisible(false);
-      }
-    };
-    document.addEventListener('click', handleOutsideClick, true);
+    if (currentBtn !== 'game') return;
+    const timer = setInterval(() => {
+      setTime((pre) => pre - 1);
+    }, 1000);
+    if (time === 0) {
+      setCurrentBtn('gameover');
+      clearInterval(timer);
+    }
     return () => {
-      document.removeEventListener('click', handleOutsideClick, true);
+      clearInterval(timer);
     };
-  }, [pwRef]);
+  }, [time, currentBtn]);
 
   return (
     <WaitingRoomLayout>
-      <BlackBackground visible={pwVisible}>
-        <PassWord ref={pwRef}>
-          <p>123456</p>
-        </PassWord>
+      <BlackBackground $visible={visible} onClick={onClickBlackBackground}>
+        {currentBtn === 'password' ? (
+          <PassWord ref={pwRef}>
+            <p>123456</p>
+          </PassWord>
+        ) : null}
+        {currentBtn === 'game' ? (
+          <GameInProgress>
+            <img src="/images/defaultProfile.svg" />
+            <div>
+              <p>0라운드</p>
+              <p>00:0{time}</p>
+            </div>
+          </GameInProgress>
+        ) : null}
+        {currentBtn === 'gameover' ? (
+          <GameOver>
+            <p>라운드 종료</p>
+            <OptionBox>
+              <button
+                onClick={() => {
+                  navigate('/room/1/result');
+                }}
+              >
+                결과 조회
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentBtn('game');
+                  setTime(5);
+                }}
+              >
+                다음 라운드
+              </button>
+            </OptionBox>
+          </GameOver>
+        ) : null}
       </BlackBackground>
+
       <Header_ />
       <Main>
         <WaitingRoomList>
@@ -39,7 +90,8 @@ function WaitingRoom() {
               button1: {
                 value: 'PASSWORD',
                 onClick: () => {
-                  setPwVisible(true);
+                  setVisible(true);
+                  setCurrentBtn('password');
                 },
               },
             }}
@@ -71,17 +123,18 @@ function WaitingRoom() {
               button1: {
                 value: 'GAME START',
                 onClick: () => {
-                  console.log('GAME START 버튼 클릭');
+                  setVisible(true);
+                  setCurrentBtn('game');
                 },
               },
             }}
           >
             <UserList>
-              {new Array(40).fill(0).map((x, index) => {
+              {new Array(40).fill(0).map((_, index) => {
                 return (
                   <UserProfile key={index}>
                     <img src="/images/defaultProfile.svg" />
-                    <p key={x}>김태하</p>
+                    <p>김태하</p>
                   </UserProfile>
                 );
               })}
@@ -102,6 +155,126 @@ const WaitingRoomLayout = styled.main`
   background: linear-gradient(120deg, #3f51b5, #00bbd4 100%);
   position: relative;
   overflow: hidden;
+`;
+
+const BlackBackground = styled.div<{ $visible: boolean }>`
+  display: ${(props) => (props.$visible ? 'flex' : 'none')};
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100%;
+  min-width: 1280px;
+  min-height: 100vh;
+  background-color: rgba(0, 0, 0, 0.36);
+  position: absolute;
+  z-index: 2;
+`;
+
+const PassWord = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 720px;
+  height: 240px;
+  border-radius: 24px;
+  background: #ffffff;
+
+  & > p {
+    color: #000000;
+    font-size: 6.4rem;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    letter-spacing: 51.2px; // 마지막 글자에도 간격 처리 됨.
+    text-indent: 51.2px; // 따라서 들여쓰기 기능 추가
+  }
+`;
+
+const GameInProgress = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 720px;
+  height: 320px;
+  border-radius: 24px;
+  background: #ffffff;
+  gap: 64px;
+
+  & > img {
+    width: 79.492px;
+    height: 79.492px;
+  }
+
+  & > div {
+    display: flex;
+    gap: 80px;
+    & > p {
+      color: #000000;
+      font-size: 4.8rem;
+      font-style: normal;
+      font-weight: 400;
+      line-height: normal;
+
+      &:nth-child(2) {
+        width: 130px;
+      }
+    }
+  }
+`;
+
+const GameOver = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 720px;
+  height: 320px;
+  border-radius: 24px;
+  background: #ffffff;
+  overflow: hidden;
+
+  & > p {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 242px;
+    color: #000000;
+    font-size: 4.8rem;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+  }
+`;
+
+const OptionBox = styled.div`
+  width: 100%;
+  border-top: 2px solid #8c8c8c;
+  height: 79px;
+  background-color: #ffffff;
+
+  & > button {
+    background-color: #ffffff;
+    height: 100%;
+    width: 50%;
+    color: #3f51b5;
+    font-size: 3.2rem;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    cursor: pointer;
+    -moz-transition: all, 0.3s;
+    -o-transition: all, 0.3s;
+    -webkit-transition: all, 0.3s;
+    transition: all, 0.3s;
+
+    &:first-child {
+      border-right: 2px solid #8c8c8c;
+    }
+
+    &:hover {
+      background-color: #a7c2e4;
+      color: #ffffff;
+    }
+  }
 `;
 
 const Main = styled.div`
@@ -175,40 +348,6 @@ const ListImage2 = styled.img`
   bottom: 91px;
   opacity: 0.3;
   pointer-events: none;
-`;
-
-const BlackBackground = styled.div<{ visible: boolean }>`
-  /* display: flex; */
-  display: ${(props) => (props.visible ? 'flex' : 'none')};
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-  height: 100%;
-  min-width: 1280px;
-  min-height: 100vh;
-  background-color: rgba(0, 0, 0, 0.36);
-  position: absolute;
-  z-index: 2;
-`;
-
-const PassWord = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 720px;
-  height: 240px;
-  border-radius: 24px;
-  background: #ffffff;
-
-  & > p {
-    color: #000000;
-    font-size: 6.4rem;
-    font-style: normal;
-    font-weight: 400;
-    line-height: normal;
-    letter-spacing: 51.2px; // 마지막 글자에도 간격 처리 됨.
-    text-indent: 51.2px; // 따라서 들여쓰기 기능 추가
-  }
 `;
 
 export default WaitingRoom;
