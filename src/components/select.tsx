@@ -58,21 +58,21 @@ function Select_({
 
   return (
     <SelectLayout ref={selectRef}>
-      <Title visible={title ? true : false}>{title}</Title>
+      <Title $visible={title ? true : false}>{title}</Title>
       <Select>
         <SelectBtn
           onClick={() => {
             setSelectedVisible((pre) => !pre);
           }}
-          visible={selectedVisible}
+          $visible={selectedVisible}
         >
           <div>
             <p>{selected}</p>
             <img src="/icons/select_icon.svg" />
           </div>
         </SelectBtn>
-        <SelectOptions visible={selectedVisible}>
-          <Options visible={selectedVisible}>
+        <SelectOptions $visible={selectedVisible}>
+          <Options $visible={selectedVisible}>
             {new Array(count).fill(0).map((_, index) => {
               const value = start + standard * index;
               let minute = '0';
@@ -119,8 +119,8 @@ const SelectLayout = styled.div`
   gap: 16px;
 `;
 
-const Title = styled.h3<{ visible: boolean }>`
-  display: ${(props) => (props.visible ? 'block' : 'none')};
+const Title = styled.h3<{ $visible: boolean }>`
+  display: ${(props) => (props.$visible ? 'block' : 'none')};
   color: #ffffff;
   font-size: 2rem;
   font-style: normal;
@@ -136,7 +136,7 @@ const Select = styled.div`
   position: relative;
 `;
 
-const SelectBtn = styled.button<{ visible: boolean }>`
+const SelectBtn = styled.button<{ $visible: boolean }>`
   display: flex;
   border-radius: 7px;
   overflow: hidden;
@@ -165,14 +165,14 @@ const SelectBtn = styled.button<{ visible: boolean }>`
 
     // select 화살표
     & > img {
-      transform: rotate(${(props) => (props.visible ? '180deg' : '0deg')});
+      transform: rotate(${(props) => (props.$visible ? '180deg' : '0deg')});
       transition: all, 0.5s;
     }
   }
 `;
 
-const SelectOptions = styled.div<{ visible: boolean }>`
-  visibility: ${(props) => (props.visible ? 'visible' : 'hidden')};
+const SelectOptions = styled.div<{ $visible: boolean }>`
+  visibility: ${(props) => (props.$visible ? 'visible' : 'hidden')};
   height: 170px;
   list-style: none;
   background-color: #a7c2e4;
@@ -180,9 +180,9 @@ const SelectOptions = styled.div<{ visible: boolean }>`
   position: absolute;
   top: 40px;
   z-index: 1;
-  opacity: ${(props) => (props.visible ? '1' : '0')};
+  opacity: ${(props) => (props.$visible ? '1' : '0')};
   transition: all, 0.5s;
-  pointer-events: ${(props) => (props.visible ? 'all' : 'none')};
+  pointer-events: ${(props) => (props.$visible ? 'all' : 'none')};
   overflow-y: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -191,7 +191,7 @@ const SelectOptions = styled.div<{ visible: boolean }>`
   }
 `;
 
-const Options = styled.ul<{ visible: boolean }>`
+const Options = styled.ul<{ $visible: boolean }>`
   & > li {
     width: 132px;
     padding: 4px 16px;
@@ -205,7 +205,7 @@ const Options = styled.ul<{ visible: boolean }>`
     &:hover {
       background-color: rgba(255, 255, 255, 0.5);
       border-radius: 7px;
-      opacity: ${(props) => (props.visible ? '1' : '0.7')};
+      opacity: ${(props) => (props.$visible ? '1' : '0.7')};
       transition: all, 0.5s;
     }
   }
