@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
@@ -7,10 +8,14 @@ import Select_ from '@components/select';
 import { useNavigate } from 'react-router-dom';
 
 function WaitingRoom() {
+  const { state } = useLocation();
   const navigate = useNavigate();
   const pwRef = useRef<any>(null);
   const [visible, setVisible] = useState<boolean>(false); // 팝업창 visible
   const [currentBtn, setCurrentBtn] = useState<string>(''); // 현재 선택된 버튼
+
+  // Main페이지에서 넘어온 roomPW
+  console.log(state.roomPW);
 
   const onClickBlackBackground = (e: any) => {
     if (
