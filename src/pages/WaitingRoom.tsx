@@ -1,11 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:8000');
+
+interface Students {
+  user_id: number;
+  name: string;
+  label: number;
+  room_id: number;
+}
 
 function WaitingRoom() {
   const { state } = useLocation();
@@ -13,9 +23,18 @@ function WaitingRoom() {
   const pwRef = useRef<any>(null);
   const [visible, setVisible] = useState<boolean>(false); // 팝업창 visible
   const [currentBtn, setCurrentBtn] = useState<string>(''); // 현재 선택된 버튼
+  const [students, setStudents] = useState<Students[] | []>([]);
 
-  // Main페이지에서 넘어온 roomPW
-  console.log(state.roomPW);
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('connection server');
+    });
+    socket.emit('room_connect', String(123456));
+    socket.emit('getParticipants', String(123456));
+    socket.on('updateParticipants', (students: Students[]) => {
+      setStudents(students);
+    });
+  }, []);
 
   const onClickBlackBackground = (e: any) => {
     if (
@@ -26,7 +45,6 @@ function WaitingRoom() {
       setVisible(false);
     }
   };
-
   const [time, setTime] = useState(5); // 일단 임시로 시간 설정
 
   // 타이머 만들기는 했지만 아직 고민해야할 부분이 많음.
@@ -49,7 +67,7 @@ function WaitingRoom() {
       <BlackBackground $visible={visible} onClick={onClickBlackBackground}>
         {currentBtn === 'password' ? (
           <PassWord ref={pwRef}>
-            <p>123456</p>
+            <p>{state.roomPW}</p>
           </PassWord>
         ) : null}
         {currentBtn === 'game' ? (
@@ -135,11 +153,11 @@ function WaitingRoom() {
             }}
           >
             <UserList>
-              {new Array(40).fill(0).map((_, index) => {
+              {students.map((student, index) => {
                 return (
                   <UserProfile key={index}>
                     <img src="/images/defaultProfile.svg" />
-                    <p>김태하</p>
+                    <p>{student.name}</p>
                   </UserProfile>
                 );
               })}
