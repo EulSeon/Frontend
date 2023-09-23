@@ -1,0 +1,23 @@
+.swiper {
+  width: 100vw;
+  height: 100vh;
+}
+
+.swiper-slide:nth-child(3) {
+  padding: 0 15px;
+}
+
+.swiper-pagination {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 2px;
+  padding: 20px;
+  z-index: 0;
+}
+
+.swiper-pagination > span {
+  background-color: rgba(255, 255, 255, 0.6);
+  width: 12px;
+  height: 12px;
+}
