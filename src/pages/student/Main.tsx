@@ -58,6 +58,17 @@ function Main_() {
     }
   };
 
+  // 모바일 브라우저 네비게이션바 같은 것들 고려해서 추가
+  const getScreenSize = () => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  };
+  useEffect(() => {
+    window.addEventListener('resize', getScreenSize);
+    return () => {
+      window.removeEventListener('resize', getScreenSize);
+    };
+  }, []);
   // pw일치여부 바뀔때마다 확인해서 비교
   useEffect(() => {
     if (pwCompare.state === true) {
