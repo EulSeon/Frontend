@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
-import { styled, keyframes, css } from 'styled-components';
+import { styled, keyframes } from 'styled-components';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -9,74 +9,39 @@ import './swipeStyles.css';
 
 function Main_() {
   const swiperRef = useRef();
-
-  useEffect(() => {
-    if (swiperRef && swiperRef.current) {
-      console.log((swiperRef.current as any).activeIndex);
-    }
-  }, [swiperRef]);
+  const profileSelectorRef = useRef<HTMLDivElement>(null);
 
   const [nameState, setNameState] = useState(false); // 현재 이름이 설정되어있는지 여부
   const [codeState, setCodeState] = useState(false); // 현재 코드가 설정되어있는지 여부
   const [pwCompare, setPwCompare] = useState<{
+    // 패스워드 일치 여부
     text: string;
     state: boolean | undefined;
   }>({
     text: '프로필을 눌러 설정해주세요',
     state: undefined,
   });
-  const [allowSlideNext, setAllowSlideNext] = useState(true);
-  const [allowSlidePrev, setAllowSlidePrev] = useState(true);
-
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
-
-  // the required distance between touchStart and touchEnd to be detected as a swipe
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e: any) => {
-    setTouchEnd(null); // otherwise the swipe is fired even with usual touch events
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: any) => setTouchEnd(e.targetTouches[0].clientX);
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-    if (isLeftSwipe || isRightSwipe) {
-      if (isRightSwipe) {
-        setNameState(false); // 다시 이름 설정하는 상태로 넘어감.
-        setCodeState(false);
-      }
-    }
-  };
+  const [allowSlidePrev, setAllowSlidePrev] = useState(true); // 이전 슬라이드 넘어가기 가능 여부
+  const [allowSlideNext, setAllowSlideNext] = useState(true); // 다음 슬라이드 넘어가기 가능 여부
+  const [profileVisible, setProfileVisible] = useState(false); // ProfileSelector visible
+  const [currentProfile, setCurrentProfile] = useState(1); // 현재 선택된 프로필
 
   // 이름 입력칸에서 엔터를 눌렀을 경우
-  const handleOnNameKeyPress = (e: any) => {
-    if (e.key === 'Enter') {
+  const handleOnNameKeyPress = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key === 'Enter' || e.keyCode === 13) {
+      e.preventDefault();
       setNameState(true); // 이름 설정 완료 상태로 설정
-      // setCodeVisible(true);
       setCodeState(false);
     }
   };
-
   // 입장코드 입력칸에서 엔터를 눌렀을 경우
-  const handleOnCodeKeyPress = (e: any) => {
-    if (e.key === 'Enter') {
+  const handleOnCodeKeyPress = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key === 'Enter' || e.keyCode === 13) {
+      e.preventDefault();
       setCodeState(true);
-      // 아래 두 줄은 테스트를 위해 임시로 넣은 부분
-      // setCodeState(true);
-      // setPwCompare((pre) => ({ ...pre, state: false }));
-
       // api에서 받은 값의 결과값이 될 변수
       const compare = true; // let으로 바꿀거임
-
       if (!compare) {
-        setCodeState(false);
-        console.log('불일치');
         // 코드가 불일치할 경우
         setCodeState(false);
         setPwCompare({
@@ -86,18 +51,19 @@ function Main_() {
         return;
       }
       setAllowSlideNext(true);
-      setPwCompare((pre) => ({
-        ...pre,
+      setPwCompare({
+        text: '패스워드가 일치합니다.',
         state: true,
-      }));
+      });
     }
   };
 
+  // pw일치여부 바뀔때마다 확인해서 비교
   useEffect(() => {
     if (pwCompare.state === true) {
       setTimeout(() => {
         (swiperRef.current as any).slideNext();
-      }, 1500);
+      }, 2000);
     }
   }, [pwCompare.state]);
 
@@ -112,10 +78,14 @@ function Main_() {
         allowSlideNext={allowSlideNext}
         allowSlidePrev={allowSlidePrev}
         onSlideChange={() => {
-          if ((swiperRef.current as any).activeIndex === 1) {
+          if ((swiperRef.current as any).activeIndex === 0) {
+            // 첫 번째 슬라이드
+            setAllowSlideNext(true);
+          } else if ((swiperRef.current as any).activeIndex === 1) {
+            // 두 번째 슬라이드
             setAllowSlideNext(false);
-            setAllowSlidePrev(false);
           } else if ((swiperRef.current as any).activeIndex === 2) {
+            // 세 번째 슬라이드
             setAllowSlideNext(false);
             setAllowSlidePrev(false);
           }
@@ -130,49 +100,67 @@ function Main_() {
             </p>
           </FirstPage>
         </SwiperSlide>
-        <SwiperSlide
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
-          <SecondPage
-            $state={nameState}
-            $codeVisible={nameState}
-            // $codeState={codeState}
-          >
-            <SetMyInfo
-              $nameState={nameState}
-              $codeVisible={nameState}
-              $codeState={codeState}
-            >
-              <img src="/images/defaultProfile.svg" />
-              <input
-                type="text"
-                placeholder="이름을 입력해주세요"
-                disabled={nameState}
-                onKeyDown={handleOnNameKeyPress}
-              />
-
-              <input
-                type="text"
-                placeholder="입장 코드를 입력하세요"
-                // disabled={codeState}
-                onKeyDown={handleOnCodeKeyPress}
-              />
+        <SwiperSlide>
+          <SecondPage $state={nameState} $codeVisible={nameState}>
+            <SetMyInfo $nameState={nameState}>
+              {currentProfile === 1 ? (
+                <img
+                  src="/images/defaultProfile-blue1.svg"
+                  onClick={() => {
+                    setProfileVisible(true);
+                  }}
+                />
+              ) : null}
+              {currentProfile === 2 ? (
+                <img
+                  src="/images/defaultProfile-blue2.svg"
+                  onClick={() => {
+                    setProfileVisible(true);
+                  }}
+                />
+              ) : null}
+              {currentProfile === 3 ? (
+                <img
+                  src="/images/defaultProfile-blue3.svg"
+                  onClick={() => {
+                    setProfileVisible(true);
+                  }}
+                />
+              ) : null}
+              <NameForm
+                $nameState={nameState}
+                // onSubmit={handleOnNameKeyPress}
+              >
+                <input
+                  type="text"
+                  placeholder="이름을 입력해주세요"
+                  readOnly={nameState}
+                  onKeyDown={handleOnNameKeyPress}
+                  onClick={() => {
+                    if (nameState) {
+                      setNameState(false);
+                    }
+                  }}
+                />
+                <button type="submit">테스트</button>
+              </NameForm>
+              <RoomCodeForm
+                $nameState={nameState}
+                $codeState={codeState}
+                // onSubmit={handleOnCodeKeyPress}
+              >
+                <input
+                  type="text"
+                  placeholder="입장 코드를 입력하세요"
+                  disabled={!nameState ? !codeState : codeState}
+                  onKeyDown={handleOnCodeKeyPress}
+                  maxLength={6}
+                />
+                <button type="submit">테스트</button>
+              </RoomCodeForm>
             </SetMyInfo>
 
             <Notice $state={pwCompare.state}>{pwCompare.text}</Notice>
-
-            {/* <ProfileSelector>
-              <SlidingDoor>
-                <span></span>
-              </SlidingDoor>
-              <Profiles>
-                <img src="/images/defaultProfile1.svg" />
-                <img src="/images/defaultProfile2.svg" />
-                <img src="/images/defaultProfile3.svg" />
-              </Profiles>
-            </ProfileSelector> */}
           </SecondPage>
         </SwiperSlide>
         <SwiperSlide>
@@ -196,6 +184,44 @@ function Main_() {
     </MainLayout>
   );
 }
+
+const profile_slide = (state: boolean) => keyframes`
+  from {
+    transform: ${state ? 'translateY(25px)' : 'translateY(0px)'};
+  }
+  to {
+    transform: ${state ? 'translateY(0px)' : 'translateY(25px)'};
+  }
+`;
+const name_slide = (state: boolean) => keyframes`
+  from {
+    transform: ${state ? 'translateY(40px)' : 'translateY(-20px)'};
+    background: ${
+      state ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0)'
+    };
+  }
+
+  to {
+    transform: ${state ? 'translateY(0px)' : 'translateY(20px)'};
+    background: ${state ? 'rgba(255, 255, 255, 0)' : ''};
+  }
+`;
+const roomcode_slide = (state: boolean) => keyframes`
+  from {
+    transform: ${state ? 'translateY(40px)' : 'translateY(-10px)'};
+    background: ${
+      state ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 1)'
+    };
+    opacity: ${state ? '0' : '1'};
+  }
+  to {
+    transform: ${state ? 'translateY(-10px)' : 'translateY(40px)'};
+    opacity: ${state ? '1' : '0'};
+    // profile selector가 올라왔을 때 roomcode input 있는 부분이 클릭 안되는 오류가 있어서 추가
+    display: ${state ? '' : 'none'}; 
+  }
+`;
+
 const MainLayout = styled.main`
   background: linear-gradient(
     108deg,
@@ -204,6 +230,8 @@ const MainLayout = styled.main`
     #03a9f4 99.95%
   );
   position: relative;
+  height: calc(var(--vh, 1vh) * 100);
+  min-height: 600px; // 모바일에서 pagination 올라오는 거 방지
 `;
 
 const FirstPage = styled.div`
@@ -212,12 +240,14 @@ const FirstPage = styled.div`
   justify-content: center;
   align-items: center;
   width: 100vw;
-  height: 100vh;
+  height: 100%;
   background: none;
   gap: 40px;
 
   & > img {
-    width: 200px;
+    max-width: 200px;
+    min-width: 150px;
+    width: 51%;
   }
 
   & > p {
@@ -230,13 +260,13 @@ const FirstPage = styled.div`
   }
 `;
 
-const SecondPage = styled.form<{ $state: boolean; $codeVisible: boolean }>`
+const SecondPage = styled.div<{ $state: boolean; $codeVisible: boolean }>`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   width: 100vw;
-  height: 100vh;
+  height: 100%;
   background: none;
   gap: 40px;
   position: relative;
@@ -244,8 +274,6 @@ const SecondPage = styled.form<{ $state: boolean; $codeVisible: boolean }>`
 
 const SetMyInfo = styled.div<{
   $nameState: boolean;
-  $codeVisible: boolean;
-  $codeState: boolean;
 }>`
   display: flex;
   flex-direction: column;
@@ -257,13 +285,25 @@ const SetMyInfo = styled.div<{
   position: relative;
 
   & > img {
+    display: block;
     width: 100px;
     height: 100px;
     border-radius: 100px;
-    animation: ${(props) => slidein2(props.$nameState)} 1s 0s forwards;
+    animation: ${(props) => profile_slide(props.$nameState)} 1s 0s forwards;
   }
+`;
 
-  & > input:nth-child(2) {
+const NameForm = styled.form<{
+  $nameState: boolean;
+}>`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+
+  & > input {
+    width: 75%;
+    max-width: 296px;
+    display: block;
     border-radius: 100px;
     background: ${(props) =>
       props.$nameState ? 'rgba(255, 255, 255, 0.4)' : '#ffffff'};
@@ -274,7 +314,7 @@ const SetMyInfo = styled.div<{
     font-weight: 400;
     line-height: normal;
     text-align: center;
-    animation: ${(props) => slideup(props.$nameState)} 1s 0s forwards;
+    animation: ${(props) => name_slide(props.$nameState)} 1s 0s forwards;
 
     ::placeholder {
       color: rgba(0, 0, 0, 0.5);
@@ -293,30 +333,38 @@ const SetMyInfo = styled.div<{
       }
     }
   }
+  // submit 버튼
+  & > button {
+    display: none;
+  }
+`;
 
-  & > input:nth-child(3) {
+const RoomCodeForm = styled.form<{
+  $nameState: boolean;
+  $codeState: boolean;
+}>`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+
+  & > input {
+    width: 75%;
+    max-width: 296px;
+    display: block;
     position: absolute;
     bottom: 0px;
     border-radius: 100px;
     background: ${(props) =>
       !props.$codeState ? '#ffffff' : 'rgba(255, 255, 255, 0)'};
     padding: 16px 44px;
-    color: ${(props) =>
-      props.$codeVisible ? 'rgba(0, 0, 0, 0.5)' : '#ffffff'};
+    color: ${(props) => (!props.$codeState ? 'rgba(0, 0, 0, 0.5)' : '#ffffff')};
     font-size: 1.6rem;
     font-style: normal;
     font-weight: 400;
     line-height: normal;
     text-align: center;
     letter-spacing: ${(props) => (props.$codeState ? '7px' : '0px')};
-    animation: ${(props) =>
-      props.$codeState
-        ? css`
-            ${final} 1s 0s forwards
-          `
-        : css`
-            ${slidein3(props.$codeVisible)} 1s 0s forwards
-          `};
+    animation: ${(props) => roomcode_slide(props.$nameState)} 1s 0s forwards;
 
     ::placeholder {
       color: rgba(0, 0, 0, 0.5);
@@ -335,6 +383,10 @@ const SetMyInfo = styled.div<{
       }
     }
   }
+  // submit 버튼
+  & > button {
+    display: none;
+  }
 `;
 
 const Notice = styled.p<{ $state: boolean | undefined }>`
@@ -352,92 +404,6 @@ const Notice = styled.p<{ $state: boolean | undefined }>`
   width: 100%;
   background-color: ${(props) =>
     props.$state === false ? 'rgba(255, 0, 0, 0.3)' : 'none'};
-`;
-
-const ProfileSelector = styled.div`
-  width: 100%;
-  height: 240px;
-  background-color: #ffffff;
-  position: absolute;
-  bottom: 0;
-  border-radius: 16px 16px 0 0;
-`;
-
-const SlidingDoor = styled.div`
-  height: 72.5px;
-  border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
-  position: relative;
-  display: flex;
-  justify-content: center;
-
-  & > span {
-    display: inline-block;
-    width: 134px;
-    height: 5px;
-    border-radius: 100px;
-    background: rgba(0, 0, 0, 0.4);
-    position: absolute;
-    top: 12px;
-  }
-`;
-
-const Profiles = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  padding: 32px 16px 35px 16px;
-  gap: 10px;
-  overflow-x: auto;
-`;
-
-const slideup = (state: boolean) => keyframes`
-  from {
-    transform: ${state ? 'translateY(40px)' : 'translateY(-40px)'};
-    background: ${
-      state ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 0)'
-    };
-  }
-
-  to {
-    transform: ${state ? 'translateY(0px)' : 'translateY(20px)'};
-    background: ${state ? 'rgba(255, 255, 255, 0)' : ''};
-  }
-`;
-
-const slidein3 = (state: boolean) => keyframes`
-  from {
-    transform: ${state ? 'translateY(40px)' : 'translateY(-10px)'};
-    background: ${
-      state ? 'rgba(255, 255, 255, 0.4)' : 'rgba(255, 255, 255, 1)'
-    };
-    opacity: ${state ? '0' : '1'};
-  }
-  to {
-    transform: ${state ? 'translateY(-10px)' : 'translateY(40px)'};
-    background: ${state ? '' : ''};
-    opacity: ${state ? '1' : '0'};
-  }
-`;
-
-const final = keyframes`
-  from {
-    transform: translateY(-10px);
-    background: rgba(255, 255, 255, 0.4);
-  }
-  to {
-    transform: translateY(-10px);
-    background: rgba(255, 255, 255, 0);
-  }
-`;
-
-const slidein2 = (state: boolean) => keyframes`
-  from {
-    transform: ${state ? 'translateY(25px)' : 'translateY(0px)'};
-  }
-
-  to {
-    transform: ${state ? 'translateY(0px)' : 'translateY(25px)'};
-  }
 `;
 
 const ThirdPage = styled.div`
