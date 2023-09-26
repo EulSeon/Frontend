@@ -66,6 +66,22 @@ function Main_() {
       }, 2000);
     }
   }, [pwCompare.state]);
+  // ProfileSelector 여닫이
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      // Select layout을 제외한 부분을 클릭했을 경우 selected가 안 보이도록 설정
+      if (
+        !profileSelectorRef.current ||
+        !profileSelectorRef.current.contains(e.target as Document)
+      ) {
+        setProfileVisible(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick, true);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick, true);
+    };
+  }, [profileSelectorRef]);
 
   return (
     <MainLayout>
@@ -161,6 +177,32 @@ function Main_() {
             </SetMyInfo>
 
             <Notice $state={pwCompare.state}>{pwCompare.text}</Notice>
+
+            <ProfileSelector ref={profileSelectorRef} $visible={profileVisible}>
+              <SlidingDoor>
+                <span></span>
+              </SlidingDoor>
+              <Profiles>
+                <img
+                  src="/images/defaultProfile-gray1.svg"
+                  onClick={() => {
+                    setCurrentProfile(1);
+                  }}
+                />
+                <img
+                  src="/images/defaultProfile-gray2.svg"
+                  onClick={() => {
+                    setCurrentProfile(2);
+                  }}
+                />
+                <img
+                  src="/images/defaultProfile-gray3.svg"
+                  onClick={() => {
+                    setCurrentProfile(3);
+                  }}
+                />
+              </Profiles>
+            </ProfileSelector>
           </SecondPage>
         </SwiperSlide>
         <SwiperSlide>
@@ -404,6 +446,46 @@ const Notice = styled.p<{ $state: boolean | undefined }>`
   width: 100%;
   background-color: ${(props) =>
     props.$state === false ? 'rgba(255, 0, 0, 0.3)' : 'none'};
+`;
+
+const ProfileSelector = styled.div<{ $visible: boolean }>`
+  width: 100%;
+  height: 240px;
+  background-color: #ffffff;
+  position: absolute;
+  bottom: 0;
+  border-radius: 16px 16px 0 0;
+  transform: ${(props) =>
+    props.$visible ? 'translateY(-0%)' : 'translateY(100%)'};
+  transition: ${(props) =>
+    props.$visible ? 'transform 0.6s ease-out' : 'transform 0.6s ease-in'};
+`;
+
+const SlidingDoor = styled.div`
+  height: 72.5px;
+  border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+  position: relative;
+  display: flex;
+  justify-content: center;
+
+  & > span {
+    display: inline-block;
+    width: 134px;
+    height: 5px;
+    border-radius: 100px;
+    background: rgba(0, 0, 0, 0.4);
+    position: absolute;
+    top: 12px;
+  }
+`;
+
+const Profiles = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 32px 16px 35px 16px;
+  gap: 10px;
+  overflow-x: auto;
 `;
 
 const ThirdPage = styled.div`
