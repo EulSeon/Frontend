@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
@@ -7,22 +7,37 @@ import StudentLayout_ from '@components/student/layout';
 import Wallet from '@components/student/wallet';
 import Stock from '@components/student/stock';
 import News from '@components/student/news';
+import { useRecoilState } from 'recoil';
+import { navbarState } from '@states/navbarState';
+import { stockModalState } from '@states/modalState';
 
 function Game() {
   const navigate = useNavigate();
+  const [selectedNav] = useRecoilState(navbarState);
+  const [modalState, setModalState] = useRecoilState(stockModalState);
   const popupRef = useRef<any>(null);
-  const [current, setCurrent] = useState('wallet');
-  const [selectedNav, setSelectedNav] = useState('wallet');
+
+  const onClickBlackBackground = (e: any) => {
+    if (!popupRef.current || !popupRef.current.contains(e.target)) {
+      setModalState((pre) => ({
+        ...pre,
+        visible: false,
+      }));
+    }
+  };
 
   return (
     <StudentLayout_>
-      <BlackBackground></BlackBackground>
+      <BlackBackground
+        $visible={modalState.visible}
+        onClick={onClickBlackBackground}
+      ></BlackBackground>
       <StudentHeader navbar />
       <Main>
         <ContentSection>
-          {current === 'wallet' ? <Wallet /> : null}
-          {current === 'stock' ? <Stock /> : null}
-          {current === 'news' ? <News /> : null}
+          {selectedNav === 'wallet' ? <Wallet /> : null}
+          {selectedNav === 'stock' ? <Stock /> : null}
+          {selectedNav === 'news' ? <News /> : null}
         </ContentSection>
         <Round>
           <p>N / 10 라운드</p>
@@ -30,7 +45,7 @@ function Game() {
         </Round>
       </Main>
 
-      <PopUP ref={popupRef}>
+      <PopUP $visible={modalState.visible} ref={popupRef}>
         <span></span>
         <h2>A 엔터</h2>
         <Price>
@@ -46,13 +61,49 @@ function Game() {
         <PopUP_Notice>전 라운드보다 15,500원(+50%)이 올랐어요</PopUP_Notice>
         {selectedNav === 'wallet' ? (
           <PopUP_Button>
-            <button>추가매수</button>
-            <button>매도하기</button>
+            <button
+              onClick={() => {
+                setModalState({
+                  buttonState: 'buy',
+                  visible: false,
+                });
+                setTimeout(() => {
+                  navigate('/student/buy');
+                }, 500);
+              }}
+            >
+              추가매수
+            </button>
+            <button
+              onClick={() => {
+                setModalState({
+                  buttonState: 'sell',
+                  visible: false,
+                });
+                setTimeout(() => {
+                  navigate('/student/sell');
+                }, 500);
+              }}
+            >
+              매도하기
+            </button>
           </PopUP_Button>
         ) : null}
         {selectedNav === 'stock' ? (
           <PopUP_Button>
-            <button>매수하기</button>
+            <button
+              onClick={() => {
+                setModalState({
+                  buttonState: 'buy',
+                  visible: false,
+                });
+                setTimeout(() => {
+                  navigate('/student/buy');
+                }, 500);
+              }}
+            >
+              매수하기
+            </button>
           </PopUP_Button>
         ) : null}
       </PopUP>
@@ -60,8 +111,8 @@ function Game() {
   );
 }
 
-const BlackBackground = styled.div`
-  display: flex;
+const BlackBackground = styled.div<{ $visible: boolean }>`
+  display: ${(props) => (props.$visible ? 'flex' : 'none')};
   justify-content: center;
   align-items: center;
   width: 100%;
@@ -108,7 +159,7 @@ const Round = styled.div`
   }
 `;
 
-const PopUP = styled.div`
+const PopUP = styled.div<{ $visible: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -122,6 +173,10 @@ const PopUP = styled.div`
   left: 0;
   overflow: hidden;
   z-index: 1;
+  transform: ${(props) =>
+    props.$visible ? 'translateY(-0%)' : 'translateY(100%)'};
+  transition: ${(props) =>
+    props.$visible ? 'transform 0.5s ease-out' : 'transform 0.5s ease-in'};
 
   & > span {
     display: inline-block;
