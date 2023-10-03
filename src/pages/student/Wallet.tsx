@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
@@ -25,6 +25,21 @@ function Game() {
       }));
     }
   };
+
+  // 모달창 열린 후 배경 스크롤 불가능하도록 설정
+  useEffect(() => {
+    if (modalState.visible) {
+      document.body.style.cssText = `
+          position: fixed;
+          top: -${window.scrollY}px;
+          overflow-y: scroll;
+          width: 100%;`;
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.cssText = '';
+      window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
+    }
+  }, [modalState.visible]);
 
   return (
     <StudentLayout_>
