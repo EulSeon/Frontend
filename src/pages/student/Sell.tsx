@@ -1,13 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
+import { useRecoilState } from 'recoil';
+import { stockModalState } from '@states/modalState';
 
 function Buy() {
   const [value, setValue] = useState<string>('');
+  const [modalState, setModalState] = useRecoilState(stockModalState);
+
+  useEffect(() => {
+    return () => {
+      setModalState((pre) => ({
+        ...pre,
+        buttonState: null,
+      }));
+    };
+  }, []);
 
   return (
-    <>
+    <SellLayout>
       <StudentHeader />
       <Main>
         <PriceBox>
@@ -94,9 +106,25 @@ function Buy() {
           </Round>
         </RoundBox>
       </Main>
-    </>
+    </SellLayout>
   );
 }
+
+const SellLayout = styled.div`
+  background-color: #ececec;
+`;
+
+const up_slide = () => keyframes`
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+
+  to {
+    transform:translateY(0px);
+    opacity: 1;
+  }
+`;
 
 const Main = styled.main`
   display: flex;
@@ -105,6 +133,7 @@ const Main = styled.main`
   height: 100%;
   /* min-height: calc(100vh - 108px); */
   background-color: #ececec;
+  animation: ${up_slide} 0.5s 0s forwards;
 `;
 
 const PriceBox = styled.div`
