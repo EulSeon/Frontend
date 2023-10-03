@@ -14,6 +14,7 @@ const StudentLayout = styled.div`
   height: auto;
   overflow: hidden;
   background-color: #ececec;
+  position: relative;
 `;
 
 export default StudentLayout_;
