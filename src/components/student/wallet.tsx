@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { styled } from 'styled-components';
+import { useRecoilState } from 'recoil';
+import { stockModalState } from '@states/modalState';
 
 function Wallet() {
   const [currentComponent, setCurrentComponent] = useState(false); // 임시로 추가
+  const [modalState, setModalState] = useRecoilState(stockModalState);
 
   return (
     <>
@@ -48,7 +51,15 @@ function Wallet() {
           <List>
             {new Array(20).fill(0).map((_, index) => {
               return (
-                <ListItem key={index}>
+                <ListItem
+                  key={index}
+                  onClick={() => {
+                    setModalState((pre) => ({
+                      ...pre,
+                      visible: !pre.visible,
+                    }));
+                  }}
+                >
                   <div>
                     <p>A엔터</p>
                     <p>10주</p>

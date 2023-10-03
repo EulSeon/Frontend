@@ -1,7 +1,11 @@
 import React from 'react';
 import { styled } from 'styled-components';
+import { useRecoilState } from 'recoil';
+import { stockModalState } from '@states/modalState';
 
 function Stock() {
+  const [modalState, setModalState] = useRecoilState(stockModalState);
+
   return (
     <>
       <Contents>
@@ -9,7 +13,15 @@ function Stock() {
         <List>
           {new Array(20).fill(0).map((_, index) => {
             return (
-              <ListItem key={index}>
+              <ListItem
+                key={index}
+                onClick={() => {
+                  setModalState((pre) => ({
+                    ...pre,
+                    visible: !pre.visible,
+                  }));
+                }}
+              >
                 <div>
                   <p>A엔터</p>
                 </div>
