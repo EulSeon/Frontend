@@ -1,6 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { styled } from 'styled-components';
+import { css, keyframes, styled } from 'styled-components';
+import { useRecoilState } from 'recoil';
+import { navbarState } from '@states/navbarState';
+import { stockModalState } from '@states/modalState';
 
 interface StudentHeaderProps {
   navbar?: boolean;
@@ -8,6 +11,8 @@ interface StudentHeaderProps {
 
 function StudentHeader({ navbar }: StudentHeaderProps) {
   const navigate = useNavigate();
+  const [selectedNav, setSelectedNav] = useRecoilState(navbarState);
+  const [modalState, setModalState] = useRecoilState(stockModalState);
 
   return (
     <HeaderLayout>
@@ -17,10 +22,40 @@ function StudentHeader({ navbar }: StudentHeaderProps) {
         </HeaderLogo>
 
         {navbar ? (
-          <Navbar>
-            <button>지갑</button>
-            <button>종목</button>
-            <button>뉴스</button>
+          <Navbar $state={modalState.buttonState} $selected={selectedNav}>
+            <button
+              onClick={() => {
+                setSelectedNav('wallet');
+                setModalState((pre) => ({
+                  ...pre,
+                  buttonState: 'wallet',
+                }));
+              }}
+            >
+              지갑
+            </button>
+            <button
+              onClick={() => {
+                setSelectedNav('stock');
+                setModalState((pre) => ({
+                  ...pre,
+                  buttonState: 'stock',
+                }));
+              }}
+            >
+              종목
+            </button>
+            <button
+              onClick={() => {
+                setSelectedNav('news');
+                setModalState((pre) => ({
+                  ...pre,
+                  buttonState: 'news',
+                }));
+              }}
+            >
+              뉴스
+            </button>
           </Navbar>
         ) : (
           <GoBack>
@@ -38,6 +73,26 @@ function StudentHeader({ navbar }: StudentHeaderProps) {
   );
 }
 
+const left_slide = () => keyframes`
+  from {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0px);
+    opacity: 1;
+  }
+`;
+
+const left_slide2 = () => keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
 const GoBack = styled.div`
   display: flex;
   justify-content: center;
@@ -49,6 +104,7 @@ const GoBack = styled.div`
   & > img {
     position: absolute;
     left: 7px;
+    animation: ${left_slide2} 0.5s 0s forwards;
     cursor: pointer;
   }
 
@@ -58,6 +114,7 @@ const GoBack = styled.div`
     font-style: normal;
     font-weight: 400;
     line-height: normal;
+    animation: ${left_slide} 0.5s 0s forwards;
   }
 `;
 
@@ -85,12 +142,44 @@ const Header = styled.div`
   margin: 0 auto;
 `;
 
-const Navbar = styled.nav`
+const navbarOpacity = (state: string | undefined | null) => keyframes`
+  from {
+    opacity: ${state !== null ? '1' : '0'};
+  }
+
+  to {
+    opacity: ${state !== null ? '0' : '1'};
+  }
+`;
+
+const navbarWidth = (state: string | undefined | null) => keyframes`
+from {
+  width: ${state !== null ? '' : '80%'};
+}
+
+to {
+  width: ${state !== null ? '80%' : ''};
+}
+`;
+
+const Navbar = styled.nav<{
+  $state: string | undefined | null;
+  $selected: string;
+}>`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   width: 100%;
-
+  animation: ${(props) =>
+    props.$state === undefined
+      ? ``
+      : props.$state !== 'wallet' &&
+        props.$state !== 'stock' &&
+        props.$state !== 'news'
+      ? css`
+          ${navbarOpacity(props.$state)} 0.6s 0s linear
+        `
+      : ``};
   & > button {
     display: flex;
     justify-content: center;
@@ -109,14 +198,40 @@ const Navbar = styled.nav`
 
     &:nth-child(1) {
       border-radius: 0 8px 0 0;
+      background: ${(props) =>
+        props.$selected === 'wallet' ? 'rgba(255, 255, 255, 0.3)' : 'none'};
+      animation: ${(props) =>
+        props.$state === undefined
+          ? ``
+          : props.$selected === 'wallet' &&
+            props.$state !== 'wallet' &&
+            props.$state !== 'stock'
+          ? css`
+              ${navbarWidth(props.$state)} 0.6s 0s linear
+            `
+          : ``};
     }
 
     &:nth-child(2) {
       border-radius: 8px 8px 0 0;
+      background: ${(props) =>
+        props.$selected === 'stock' ? 'rgba(255, 255, 255, 0.3)' : 'none'};
+      animation: ${(props) =>
+        props.$state === undefined
+          ? ``
+          : props.$selected === 'stock' &&
+            props.$state !== 'wallet' &&
+            props.$state !== 'stock'
+          ? css`
+              ${navbarWidth(props.$state)} 0.6s 0s linear
+            `
+          : ``};
     }
 
     &:nth-child(3) {
       border-radius: 8px 0 0 0;
+      background: ${(props) =>
+        props.$selected === 'news' ? 'rgba(255, 255, 255, 0.3)' : 'none'};
     }
 
     &:hover {
