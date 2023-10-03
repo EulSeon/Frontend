@@ -8,7 +8,8 @@
       "@interfaces/*": ["interfaces/*"],
       "@lib/*": ["lib/*"],
       "@pages/*": ["pages/*"],
-      "@utils/*": ["utils/*"]
+      "@utils/*": ["utils/*"],
+      "@states/*": ["states/*"]
     },
     "outDir": "./dist",
     "allowJs": true, // JS 파일 허용
@@ -19,7 +20,7 @@
     "jsx": "react-jsx",
     "module": "commonjs",
     "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": false, // 파일명 변경했을 때 오류 해결하기 위해 true -> false
     "strict": true,
     "noUnusedParameters": true,
     "skipLibCheck": true
