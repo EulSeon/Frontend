@@ -70,12 +70,15 @@ function WaitingRoom() {
     socket.on('updateParticipants', (students: Students[]) => {
       setStudents(students);
     });
-    socket.on('timerStarted', (info: any) => {
-      console.log(info); // 시작시간, 지속시간
-    });
-    socket.on('timerTick', (info: any) => {
+    socket.on(
+      'timerStarted',
+      (info: { startTime: number; duration: number }) => {
+        console.log(info); // 시작시간, 지속시간
+      }
+    );
+    socket.on('timerTick', (remainingTime: number) => {
       // 타이머 시간 가는 중 ...
-      const { min, sec } = convertSecondsToMinute(info);
+      const { min, sec } = convertSecondsToMinute(remainingTime);
       setTimer({ min, sec });
     });
     socket.on('timerEnded', () => {
