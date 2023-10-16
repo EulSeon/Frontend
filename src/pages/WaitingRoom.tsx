@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
@@ -23,14 +23,14 @@ function WaitingRoom() {
   const pwRef = useRef<any>(null);
   const [visible, setVisible] = useState<boolean>(false); // 팝업창 visible
   const [currentBtn, setCurrentBtn] = useState<string>(''); // 현재 선택된 버튼
-  const [students, setStudents] = useState<Students[] | []>([]);
+  const [students, setStudents] = useState<Students[] | []>([]); // 현재 접속한 학생들 목록
 
   useEffect(() => {
     socket.on('connect', () => {
       console.log('connection server');
     });
-    socket.emit('room_connect', String(123456));
-    socket.emit('getParticipants', String(123456));
+    socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
+    socket.emit('getParticipants', state.roomPW); // 참여자 목록 요청 이벤트
     socket.on('updateParticipants', (students: Students[]) => {
       setStudents(students);
     });
