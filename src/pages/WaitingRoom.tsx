@@ -110,11 +110,11 @@ function WaitingRoom() {
             <img src="/images/defaultProfile.svg" />
             <div>
               <p>0라운드</p>
-              {timer.min !== undefined && timer.sec !== undefined ? (
-                <p>
-                  {timer.min}:{timer.sec}
-                </p>
-              ) : null}
+              <p>
+                {timer.min !== undefined && timer.sec !== undefined
+                  ? timer.min + ':' + timer.sec
+                  : '00:00'}
+              </p>
             </div>
           </GameInProgress>
         ) : null}
