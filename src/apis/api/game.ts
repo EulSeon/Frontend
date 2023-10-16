@@ -7,6 +7,6 @@ export const getGameRoomPassword = async () => {
     return { data, status };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
-    return { message: e.response.data.message, status: e.response.status };
+    return { message: e.response.data.error, status: e.response.status };
   }
 };
