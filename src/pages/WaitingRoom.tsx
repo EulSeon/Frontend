@@ -10,6 +10,7 @@ import { io } from 'socket.io-client';
 import { useRecoilState } from 'recoil';
 import { roomSet } from '../states/roomSetting';
 import { updateRoomInfo } from '@apis/api/game';
+import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 
 const socket = io('http://localhost:8000');
 
@@ -34,6 +35,10 @@ function WaitingRoom() {
   const [currentBtn, setCurrentBtn] = useState<string>(''); // 현재 선택된 버튼
   const [students, setStudents] = useState<Students[] | []>([]); // 현재 접속한 학생들 목록
   const [roomSetting] = useRecoilState(roomSet);
+  const [timer, setTimer] = useState<{
+    min: string | undefined;
+    sec: string | undefined;
+  }>({ min: undefined, sec: undefined }); // 타이머 시간
 
   // 게임방 정보 업데이트
   const updateRoomInformation = async () => {
@@ -50,6 +55,7 @@ function WaitingRoom() {
       // 방 정보가 성공적으로 업데이트 됐을 경우
       setVisible(true);
       setCurrentBtn('game');
+      socket.emit('startTimer', state.roomPW);
     } else if (result.status === 404) {
       alert(result.data.error);
     }
@@ -63,6 +69,18 @@ function WaitingRoom() {
     socket.emit('getParticipants', state.roomPW); // 참여자 목록 요청
     socket.on('updateParticipants', (students: Students[]) => {
       setStudents(students);
+    });
+    socket.on('timerStarted', (info: any) => {
+      console.log(info); // 시작시간, 지속시간
+    });
+    socket.on('timerTick', (info: any) => {
+      // 타이머 시간 가는 중 ...
+      const { min, sec } = convertSecondsToMinute(info);
+      setTimer({ min, sec });
+    });
+    socket.on('timerEnded', () => {
+      // 타이머가 끝났을 경우
+      setCurrentBtn('gameover');
     });
   }, []);
 
@@ -89,7 +107,11 @@ function WaitingRoom() {
             <img src="/images/defaultProfile.svg" />
             <div>
               <p>0라운드</p>
-              <p>00:00</p>
+              {timer.min !== undefined && timer.sec !== undefined ? (
+                <p>
+                  {timer.min}:{timer.sec}
+                </p>
+              ) : null}
             </div>
           </GameInProgress>
         ) : null}
@@ -107,6 +129,8 @@ function WaitingRoom() {
               <button
                 onClick={() => {
                   setCurrentBtn('game');
+                  setTimer({ min: undefined, sec: undefined });
+                  socket.emit('startTimer', state.roomPW);
                 }}
               >
                 다음 라운드
