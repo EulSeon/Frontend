@@ -14,12 +14,11 @@ function Main_() {
     // 비밀번호를 성공적으로 받으면 게임 대기방으로 이동
     const roomPW = await getGameRoomPassword();
 
-    if (roomPW.status !== 200 || roomPW.data.status !== 'success') {
+    if (roomPW.status !== 200) {
       // 패스워드가 제대로 전달되지 않았을 경우
-      alert('다시 시도해주세요.');
+      alert('오류가 발생했습니다. 다시 시도해주세요.');
       return;
     }
-
     navigate('/room/wait', { state: { roomPW: roomPW.data.room_code } });
   };
 
