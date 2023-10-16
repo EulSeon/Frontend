@@ -7,6 +7,9 @@ import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
+import { useRecoilState } from 'recoil';
+import { roomSet } from '../states/roomSetting';
+import { updateRoomInfo } from '@apis/api/game';
 
 const socket = io('http://localhost:8000');
 
@@ -17,6 +20,12 @@ interface Students {
   room_id: number;
 }
 
+interface RoomSet {
+  round_num: number;
+  time_limit: number;
+  seed: number;
+}
+
 function WaitingRoom() {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -24,13 +33,34 @@ function WaitingRoom() {
   const [visible, setVisible] = useState<boolean>(false); // 팝업창 visible
   const [currentBtn, setCurrentBtn] = useState<string>(''); // 현재 선택된 버튼
   const [students, setStudents] = useState<Students[] | []>([]); // 현재 접속한 학생들 목록
+  const [roomSetting] = useRecoilState(roomSet);
+
+  // 게임방 정보 업데이트
+  const updateRoomInformation = async () => {
+    if (
+      !roomSetting.round_num ||
+      !roomSetting.time_limit ||
+      !roomSetting.seed
+    ) {
+      alert('입력하지 않은 값이 있습니다.');
+      return;
+    }
+    const result = await updateRoomInfo(state.roomPW, roomSetting as RoomSet);
+    if (result.status === 200) {
+      // 방 정보가 성공적으로 업데이트 됐을 경우
+      setVisible(true);
+      setCurrentBtn('game');
+    } else if (result.status === 404) {
+      alert(result.data.error);
+    }
+  };
 
   useEffect(() => {
     socket.on('connect', () => {
       console.log('connection server');
     });
     socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
-    socket.emit('getParticipants', state.roomPW); // 참여자 목록 요청 이벤트
+    socket.emit('getParticipants', state.roomPW); // 참여자 목록 요청
     socket.on('updateParticipants', (students: Students[]) => {
       setStudents(students);
     });
@@ -45,22 +75,6 @@ function WaitingRoom() {
       setVisible(false);
     }
   };
-  const [time, setTime] = useState(5); // 일단 임시로 시간 설정
-
-  // 타이머 만들기는 했지만 아직 고민해야할 부분이 많음.
-  useEffect(() => {
-    if (currentBtn !== 'game') return;
-    const timer = setInterval(() => {
-      setTime((pre) => pre - 1);
-    }, 1000);
-    if (time === 0) {
-      setCurrentBtn('gameover');
-      clearInterval(timer);
-    }
-    return () => {
-      clearInterval(timer);
-    };
-  }, [time, currentBtn]);
 
   return (
     <WaitingRoomLayout>
@@ -75,7 +89,7 @@ function WaitingRoom() {
             <img src="/images/defaultProfile.svg" />
             <div>
               <p>0라운드</p>
-              <p>00:0{time}</p>
+              <p>00:00</p>
             </div>
           </GameInProgress>
         ) : null}
@@ -93,7 +107,6 @@ function WaitingRoom() {
               <button
                 onClick={() => {
                   setCurrentBtn('game');
-                  setTime(5);
                 }}
               >
                 다음 라운드
@@ -146,8 +159,7 @@ function WaitingRoom() {
               button1: {
                 value: 'GAME START',
                 onClick: () => {
-                  setVisible(true);
-                  setCurrentBtn('game');
+                  updateRoomInformation();
                 },
               },
             }}

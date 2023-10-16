@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { styled } from 'styled-components';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
+import { useRecoilState } from 'recoil';
+import { roomSet } from '../states/roomSetting';
 
 interface SelectProps {
   title?: string;
@@ -26,8 +28,32 @@ function Select_({
   const [currentSelectedVal, setCurrentSelectedVal] = useState<
     number | undefined
   >(undefined); // 선택된 option의 실제로 사용될 값
+  const [, setRoom] = useRecoilState(roomSet);
 
-  console.log('현재 선택된 값:', currentSelectedVal);
+  useEffect(() => {
+    switch (title) {
+      case '라운드':
+        setRoom((pre) => ({
+          ...pre,
+          round_num: currentSelectedVal,
+        }));
+        break;
+      case '제한시간':
+        setRoom((pre) => ({
+          ...pre,
+          time_limit: currentSelectedVal,
+        }));
+        break;
+      case '시드머니':
+        setRoom((pre) => ({
+          ...pre,
+          seed: currentSelectedVal,
+        }));
+        break;
+      default:
+        alert('오류가 발생했습니다');
+    }
+  }, [currentSelectedVal]);
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -52,7 +78,11 @@ function Select_({
   ) => {
     const { innerText } = e.target as HTMLLIElement;
     setSelected(innerText);
-    setCurrentSelectedVal(value);
+    if (title === '시드머니') {
+      setCurrentSelectedVal(value * 10000);
+    } else {
+      setCurrentSelectedVal(value);
+    }
     setSelectedVisible(false);
   };
 
