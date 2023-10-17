@@ -8,7 +8,7 @@ import Select_ from '@components/select';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { useRecoilState } from 'recoil';
-import { roomSet } from '../states/roomSetting';
+import { roomSet, currentBtnState, systemVisible } from '../states/roomSetting';
 import { updateRoomInfo } from '@apis/api/game';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 
@@ -31,8 +31,8 @@ function WaitingRoom() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const pwRef = useRef<any>(null);
-  const [visible, setVisible] = useState<boolean>(false); // 팝업창 visible
-  const [currentBtn, setCurrentBtn] = useState<string>(''); // 현재 선택된 버튼
+  const [visible, setVisible] = useRecoilState(systemVisible); // 팝업창 visible
+  const [currentBtn, setCurrentBtn] = useRecoilState(currentBtnState); // 현재 선택된 버튼
   const [students, setStudents] = useState<Students[] | []>([]); // 현재 접속한 학생들 목록
   const [roomSetting] = useRecoilState(roomSet);
   const [timer, setTimer] = useState<{
@@ -124,7 +124,9 @@ function WaitingRoom() {
             <OptionBox>
               <button
                 onClick={() => {
-                  navigate('/room/1/result');
+                  navigate('/room/1/result', {
+                    state: { roomPW: state.roomPW },
+                  });
                 }}
               >
                 결과 조회
@@ -163,20 +165,38 @@ function WaitingRoom() {
               <Select_
                 title="라운드"
                 set={{ start: 5, count: 6, standard: 1 }}
-                defaultValue="라운드"
+                defaultValue={
+                  roomSetting.round_num
+                    ? String(roomSetting.round_num)
+                    : '라운드'
+                }
               />
               <Select_
                 title="제한시간"
                 set={{ start: 30, count: 20, standard: 30 }}
-                defaultValue="~분 ~초"
+                defaultValue={
+                  roomSetting.time_limit
+                    ? String(
+                        convertSecondsToMinute(roomSetting.time_limit).min +
+                          ':' +
+                          convertSecondsToMinute(roomSetting.time_limit).sec
+                      )
+                    : '~분 ~초'
+                }
               />
               <Select_
                 title="시드머니"
                 set={{ start: 100, count: 19, standard: 50 }}
-                defaultValue="만원"
+                defaultValue={
+                  roomSetting.seed
+                    ? String(roomSetting.seed).substring(
+                        0,
+                        String(roomSetting.seed).length - 4
+                      )
+                    : '만원'
+                }
               />
             </SelectList>
-
             <ListImage src="/images/roomsettingImage.svg" />
           </ListLayout_>
           <ListLayout_

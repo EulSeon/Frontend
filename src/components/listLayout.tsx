@@ -40,7 +40,9 @@ function ListLayout_({
             <TwoButton onClick={buttonInfo.button1.onClick}>
               {buttonInfo.button1.value}
             </TwoButton>
-            <TwoButton>{buttonInfo.button2?.value}</TwoButton>
+            <TwoButton onClick={buttonInfo.button2?.onClick}>
+              {buttonInfo.button2?.value}
+            </TwoButton>
           </>
         ) : (
           <>
