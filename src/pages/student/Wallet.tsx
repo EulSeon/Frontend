@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { styled } from 'styled-components';
+import { css, keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
 import StudentLayout_ from '@components/student/layout';
 import Wallet from '@components/student/wallet';
@@ -88,7 +88,7 @@ function Game() {
         onClick={onClickBlackBackground}
       ></BlackBackground>
       <StudentHeader navbar />
-      <Main>
+      <Main $state={modalState.buttonState}>
         <ContentSection>
           {selectedNav === 'wallet' ? <Wallet /> : null}
           {selectedNav === 'stock' ? <Stock /> : null}
@@ -205,7 +205,19 @@ const BlackBackground = styled.div<{ $visible: boolean }>`
   overflow: hidden;
 `;
 
-const Main = styled.main`
+const content_slide = (state: string | undefined | null) => keyframes`
+  from {
+    transform: ${state !== null ? 'translateY(0px)' : 'translateY(300px)'};
+    opacity: ${state !== null ? 1 : 0};
+  }
+
+  to {
+    transform: ${state !== null ? 'translateY(300px)' : 'translateY(0px)'};
+    opacity: ${state !== null ? 0 : 1};
+  }
+`;
+
+const Main = styled.main<{ $state: string | undefined | null }>`
   display: flex;
   flex-direction: column;
   height: calc(100% - 106px);
@@ -213,6 +225,17 @@ const Main = styled.main`
   background-color: #ececec;
   overflow: hidden;
   gap: 15px;
+
+  animation: ${(props) =>
+    props.$state === undefined
+      ? ``
+      : props.$state !== 'wallet' &&
+        props.$state !== 'stock' &&
+        props.$state !== 'news'
+      ? css`
+          ${content_slide(props.$state)} 0.5s ease-in
+        `
+      : null};
 `;
 
 const ContentSection = styled.section`
