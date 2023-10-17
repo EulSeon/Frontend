@@ -28,9 +28,14 @@ function Select_({
   const [currentSelectedVal, setCurrentSelectedVal] = useState<
     number | undefined
   >(undefined); // 선택된 option의 실제로 사용될 값
-  const [, setRoom] = useRecoilState(roomSet);
+  const [roomSetting, setRoom] = useRecoilState(roomSet);
 
   useEffect(() => {
+    // 이미 값이 저장되어있는 경우에는 값이 초기화될 수도 있기 때문에 return
+    if (roomSetting.round_num && currentSelectedVal === undefined) return;
+    if (roomSetting.time_limit && currentSelectedVal === undefined) return;
+    if (roomSetting.seed && currentSelectedVal === undefined) return;
+
     switch (title) {
       case '라운드':
         setRoom((pre) => ({
