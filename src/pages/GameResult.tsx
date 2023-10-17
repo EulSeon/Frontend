@@ -1,10 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
+import { currentBtnState } from '../states/roomSetting';
+import { useRecoilState } from 'recoil';
+
+const socket = io('http://localhost:8000');
 
 function GameResult() {
+  const { state } = useLocation();
+  const navigate = useNavigate();
+  const [_, setCurrentBtn] = useRecoilState(currentBtnState); // 현재 선택된 버튼
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('connection server');
+    });
+    socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
+  }, []);
+
   return (
     <GameResultLayout>
       <Header_ />
@@ -23,7 +40,9 @@ function GameResult() {
             button2: {
               value: '다음 라운드',
               onClick: () => {
-                console.log('두번째 버튼');
+                setCurrentBtn('game');
+                socket.emit('startTimer', state.roomPW); // 타이머 시작
+                navigate(-1); // 게임 대기방으로 다시 돌아감.
               },
             },
           }}
