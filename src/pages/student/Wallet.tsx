@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
@@ -10,12 +10,48 @@ import News from '@components/student/news';
 import { useRecoilState } from 'recoil';
 import { navbarState } from '@states/navbarState';
 import { stockModalState } from '@states/modalState';
+import { finishBackgroundState } from '@states/backgroundState';
+import { io } from 'socket.io-client';
+import convertSecondsToMinute from '@utils/convertSecondsToMinute';
+
+const socket = io('http://localhost:8000');
 
 function Game() {
   const navigate = useNavigate();
   const [selectedNav] = useRecoilState(navbarState);
   const [modalState, setModalState] = useRecoilState(stockModalState);
+  const [finish, setFinish] = useRecoilState(finishBackgroundState); // 라운드 종료 여부
   const popupRef = useRef<any>(null);
+  const [timer, setTimer] = useState<{
+    min: string | undefined;
+    sec: string | undefined;
+  }>({ min: undefined, sec: undefined }); // 타이머 시간
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('connection server');
+    });
+    socket.emit('room_connect', 'kkLBlX'); // 방 접속 이벤트 : 임시 패스워드 값 넣어둠.
+    socket.on('timerStarted', () => {
+      // 타이머 시작되면 라운드 시작
+      setFinish(false);
+    });
+    socket.on('timerTick', (info: any) => {
+      // 타이머 시간 가는 중 ...
+      const { min, sec } = convertSecondsToMinute(info);
+      setTimer({ min, sec });
+    });
+    socket.on('timerEnded', () => {
+      setTimer({ min: undefined, sec: undefined });
+      // 타이머가 끝나면 해당 라운드 종료
+      setFinish(true);
+      // 라운드가 종료될 때 모달창이 열려있는 상태였다면 모달창 닫아주기
+      setModalState((pre) => ({
+        ...pre,
+        visible: false,
+      }));
+    });
+  }, []);
 
   const onClickBlackBackground = (e: any) => {
     if (!popupRef.current || !popupRef.current.contains(e.target)) {
@@ -26,9 +62,9 @@ function Game() {
     }
   };
 
-  // 모달창 열린 후 배경 스크롤 불가능하도록 설정
+  // (모달창 열린 후 or 라운드가 끝난 화면이 나올 경우) 배경 스크롤 불가능하도록 설정
   useEffect(() => {
-    if (modalState.visible) {
+    if (modalState.visible || finish) {
       document.body.style.cssText = `
           position: fixed;
           top: -${window.scrollY}px;
@@ -39,10 +75,14 @@ function Game() {
       document.body.style.cssText = '';
       window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
     }
-  }, [modalState.visible]);
+  }, [modalState.visible, finish]);
 
   return (
     <StudentLayout_>
+      <FinishBackground $visible={finish}>
+        <p>이번 라운드가 끝났습니다.</p>
+        <p>다음 라운드가 시작될 때까지 기다려주세요 ...</p>
+      </FinishBackground>
       <BlackBackground
         $visible={modalState.visible}
         onClick={onClickBlackBackground}
@@ -56,7 +96,11 @@ function Game() {
         </ContentSection>
         <Round>
           <p>N / 10 라운드</p>
-          <p>10:00</p>
+          <p>
+            {timer.min !== undefined && timer.sec !== undefined
+              ? timer.min + ':' + timer.sec
+              : '00:00'}
+          </p>
         </Round>
       </Main>
 
@@ -125,6 +169,29 @@ function Game() {
     </StudentLayout_>
   );
 }
+
+const FinishBackground = styled.div<{ $visible: boolean }>`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.9;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(
+    108deg,
+    #3f51b5 4.42%,
+    #00bcd4 99.95%,
+    #03a9f4 99.95%
+  );
+  color: #ffffff;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  display: ${(props) => (props.$visible ? 'flex' : 'none')};
+  font-size: 1.5rem;
+  z-index: 5;
+`;
 
 const BlackBackground = styled.div<{ $visible: boolean }>`
   display: ${(props) => (props.$visible ? 'flex' : 'none')};

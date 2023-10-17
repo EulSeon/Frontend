@@ -4,10 +4,35 @@ import { keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
 import { useRecoilState } from 'recoil';
 import { stockModalState } from '@states/modalState';
+import { io } from 'socket.io-client';
+import convertSecondsToMinute from '@utils/convertSecondsToMinute';
+import { useNavigate } from 'react-router-dom';
 
-function Buy() {
+const socket = io('http://localhost:8000');
+
+function Sell() {
+  const navigate = useNavigate();
   const [value, setValue] = useState<string>('');
-  const [modalState, setModalState] = useRecoilState(stockModalState);
+  const [_, setModalState] = useRecoilState(stockModalState);
+  const [timer, setTimer] = useState<{
+    min: string | undefined;
+    sec: string | undefined;
+  }>({ min: undefined, sec: undefined }); // 타이머 시간
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('connection server');
+    });
+    socket.emit('room_connect', 'kkLBlX'); // 방 접속 이벤트 : 임시 패스워드 값 넣어둠.
+    socket.on('timerTick', (info: any) => {
+      // 타이머 시간 가는 중 ...
+      const { min, sec } = convertSecondsToMinute(info);
+      setTimer({ min, sec });
+    });
+    socket.on('timerEnded', () => {
+      navigate('/student/wallet'); // 라운드 종료시 게임방 메인페이지로 이동
+    });
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -102,7 +127,12 @@ function Buy() {
         <RoundBox>
           <Round>
             <p>N / 10 라운드</p>
-            <p>10:00</p>
+            <p>
+              {' '}
+              {timer.min !== undefined && timer.sec !== undefined
+                ? timer.min + ':' + timer.sec
+                : '00:00'}
+            </p>
           </Round>
         </RoundBox>
       </Main>
@@ -283,4 +313,4 @@ const Round = styled.div`
   }
 `;
 
-export default Buy;
+export default Sell;
