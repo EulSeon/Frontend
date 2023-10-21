@@ -16,9 +16,12 @@ const socket = io('http://localhost:8000');
 
 interface Students {
   user_id: number;
-  name: string;
+  user_name: string;
   label: number;
   room_id: number;
+  profile_num: number;
+  ishost: number;
+  session_id: string;
 }
 
 interface RoomSet {
@@ -215,8 +218,16 @@ function WaitingRoom() {
               {students.map((student, index) => {
                 return (
                   <UserProfile key={index}>
-                    <img src="/images/defaultProfile.svg" />
-                    <p>{student.name}</p>
+                    {student.profile_num === 0 ? (
+                      <img src="/images/defaultProfile-blue1.svg" />
+                    ) : null}
+                    {student.profile_num === 1 ? (
+                      <img src="/images/defaultProfile-blue2.svg" />
+                    ) : null}
+                    {student.profile_num === 2 ? (
+                      <img src="/images/defaultProfile-blue3.svg" />
+                    ) : null}
+                    <p>{student.user_name}</p>
                   </UserProfile>
                 );
               })}
