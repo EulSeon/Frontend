@@ -6,6 +6,10 @@ import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import './swipeStyles.css';
+import { participateGameRoom } from '@apis/api/game';
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:8000');
 
 function Main_() {
   const swiperRef = useRef();
@@ -24,37 +28,59 @@ function Main_() {
   const [allowSlidePrev, setAllowSlidePrev] = useState(true); // 이전 슬라이드 넘어가기 가능 여부
   const [allowSlideNext, setAllowSlideNext] = useState(true); // 다음 슬라이드 넘어가기 가능 여부
   const [profileVisible, setProfileVisible] = useState(false); // ProfileSelector visible
-  const [currentProfile, setCurrentProfile] = useState(1); // 현재 선택된 프로필
+  const [currentProfile, setCurrentProfile] = useState(0); // 현재 선택된 프로필
+
+  const [name, setName] = useState(''); // 학생 이름
+  const [roomCode, setRoomCode] = useState(''); // 방코드
 
   // 이름 입력칸에서 엔터를 눌렀을 경우
   const handleOnNameKeyPress = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
+      if (name.length === 0) {
+        alert('이름을 입력하지 않았습니다.');
+        return;
+      }
       setNameState(true); // 이름 설정 완료 상태로 설정
       setCodeState(false);
     }
   };
   // 입장코드 입력칸에서 엔터를 눌렀을 경우
-  const handleOnCodeKeyPress = (e: React.KeyboardEvent<HTMLElement>) => {
+  const handleOnCodeKeyPress = async (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
-      setCodeState(true);
-      // api에서 받은 값의 결과값이 될 변수
-      const compare = true; // let으로 바꿀거임
-      if (!compare) {
-        // 코드가 불일치할 경우
-        setCodeState(false);
-        setPwCompare({
-          text: '잘못된 입장코드 입니다.',
-          state: false,
-        });
+      if (roomCode.length === 0) {
+        alert('방코드를 입력하지 않았습니다.');
         return;
       }
-      setAllowSlideNext(true);
-      setPwCompare({
-        text: '패스워드가 일치합니다.',
-        state: true,
-      });
+      setCodeState(true);
+      setTimeout(async () => {
+        // 일치하는 방을 찾고 유저를 해당 방에 참여시킴.
+        const result = await participateGameRoom(roomCode, {
+          name,
+          profile_num: currentProfile,
+        });
+        if (result.status === 404) {
+          // 코드가 불일치할 경우
+          setCodeState(false);
+          setPwCompare({
+            text: '잘못된 입장코드 입니다.',
+            state: false,
+          });
+          return;
+        } else if (result.status === 500) {
+          setCodeState(false);
+          alert('오류가 발생했습니다. 다시 시도해주세요.');
+          return;
+        }
+        // 사용자가 성공적으로 게임방에 참여되었다면 참여자 리스트 업데이트
+        socket.emit('getParticipants', roomCode);
+        setAllowSlideNext(true);
+        setPwCompare({
+          text: '패스워드가 일치합니다.',
+          state: true,
+        });
+      }, 1000);
     }
   };
 
@@ -130,7 +156,7 @@ function Main_() {
         <SwiperSlide>
           <SecondPage $state={nameState} $codeVisible={nameState}>
             <SetMyInfo $nameState={nameState}>
-              {currentProfile === 1 ? (
+              {currentProfile === 0 ? (
                 <img
                   src="/images/defaultProfile-blue1.svg"
                   onClick={() => {
@@ -138,7 +164,7 @@ function Main_() {
                   }}
                 />
               ) : null}
-              {currentProfile === 2 ? (
+              {currentProfile === 1 ? (
                 <img
                   src="/images/defaultProfile-blue2.svg"
                   onClick={() => {
@@ -146,7 +172,7 @@ function Main_() {
                   }}
                 />
               ) : null}
-              {currentProfile === 3 ? (
+              {currentProfile === 2 ? (
                 <img
                   src="/images/defaultProfile-blue3.svg"
                   onClick={() => {
@@ -168,6 +194,9 @@ function Main_() {
                       setNameState(false);
                     }
                   }}
+                  onChange={(e: any) => {
+                    setName(e.target.value);
+                  }}
                 />
                 <button type="submit">테스트</button>
               </NameForm>
@@ -182,6 +211,9 @@ function Main_() {
                   disabled={!nameState ? !codeState : codeState}
                   onKeyDown={handleOnCodeKeyPress}
                   maxLength={6}
+                  onChange={(e: any) => {
+                    setRoomCode(e.target.value);
+                  }}
                 />
                 <button type="submit">테스트</button>
               </RoomCodeForm>
@@ -197,19 +229,19 @@ function Main_() {
                 <img
                   src="/images/defaultProfile-gray1.svg"
                   onClick={() => {
-                    setCurrentProfile(1);
+                    setCurrentProfile(0);
                   }}
                 />
                 <img
                   src="/images/defaultProfile-gray2.svg"
                   onClick={() => {
-                    setCurrentProfile(2);
+                    setCurrentProfile(1);
                   }}
                 />
                 <img
                   src="/images/defaultProfile-gray3.svg"
                   onClick={() => {
-                    setCurrentProfile(3);
+                    setCurrentProfile(2);
                   }}
                 />
               </Profiles>
