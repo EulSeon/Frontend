@@ -11,6 +11,16 @@ import { io } from 'socket.io-client';
 
 const socket = io('http://localhost:8000');
 
+interface Students {
+  user_id: number;
+  user_name: string;
+  label: number;
+  room_id: number;
+  profile_num: number;
+  ishost: number;
+  session_id: string;
+}
+
 function Main_() {
   const swiperRef = useRef();
   const profileSelectorRef = useRef<HTMLDivElement>(null);
@@ -32,6 +42,7 @@ function Main_() {
 
   const [name, setName] = useState(''); // 학생 이름
   const [roomCode, setRoomCode] = useState(''); // 방코드
+  const [students, setStudents] = useState<Students[] | []>([]); // 현재 접속한 학생들 목록
 
   // 이름 입력칸에서 엔터를 눌렀을 경우
   const handleOnNameKeyPress = (e: React.KeyboardEvent<HTMLElement>) => {
@@ -74,6 +85,7 @@ function Main_() {
           return;
         }
         // 사용자가 성공적으로 게임방에 참여되었다면 참여자 리스트 업데이트
+        socket.emit('room_connect', roomCode); // 방 접속 이벤트
         socket.emit('getParticipants', roomCode);
         setAllowSlideNext(true);
         setPwCompare({
@@ -83,6 +95,15 @@ function Main_() {
       }, 1000);
     }
   };
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      console.log('connection server');
+    });
+    socket.on('updateParticipants', (students: Students[]) => {
+      setStudents(students);
+    });
+  }, []);
 
   // 모바일 브라우저 네비게이션바 같은 것들 고려해서 추가
   const getScreenSize = () => {
@@ -252,11 +273,19 @@ function Main_() {
           <ThirdPage>
             <StudentList>
               <List>
-                {new Array(20).fill(0).map((_, index) => {
+                {students.map((student, index) => {
                   return (
                     <li key={index}>
-                      <img src="/images/defaultProfile.svg" />
-                      <p>2학년 4반 김유경</p>
+                      {student.profile_num === 0 ? (
+                        <img src="/images/defaultProfile-blue1.svg" />
+                      ) : null}
+                      {student.profile_num === 1 ? (
+                        <img src="/images/defaultProfile-blue2.svg" />
+                      ) : null}
+                      {student.profile_num === 2 ? (
+                        <img src="/images/defaultProfile-blue3.svg" />
+                      ) : null}
+                      <p>{student.user_name}</p>
                     </li>
                   );
                 })}
