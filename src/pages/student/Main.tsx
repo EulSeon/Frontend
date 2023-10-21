@@ -8,6 +8,7 @@ import 'swiper/css/pagination';
 import './swipeStyles.css';
 import { participateGameRoom } from '@apis/api/game';
 import { io } from 'socket.io-client';
+import { useNavigate } from 'react-router-dom';
 
 const socket = io('http://localhost:8000');
 
@@ -22,6 +23,7 @@ interface Students {
 }
 
 function Main_() {
+  const navigate = useNavigate();
   const swiperRef = useRef();
   const profileSelectorRef = useRef<HTMLDivElement>(null);
 
@@ -100,10 +102,17 @@ function Main_() {
     socket.on('connect', () => {
       console.log('connection server');
     });
-    socket.on('updateParticipants', (students: Students[]) => {
-      setStudents(students);
+    socket.on('updateParticipants', (result: Students[] | string) => {
+      if (result === 'start') {
+        // 게임 시작일 경우
+        navigate('wallet', {
+          state: { roomPW: roomCode },
+        });
+      } else {
+        setStudents(result as Students[]);
+      }
     });
-  }, []);
+  }, [roomCode]);
 
   // 모바일 브라우저 네비게이션바 같은 것들 고려해서 추가
   const getScreenSize = () => {

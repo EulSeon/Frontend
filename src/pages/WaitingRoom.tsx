@@ -58,7 +58,8 @@ function WaitingRoom() {
       // 방 정보가 성공적으로 업데이트 됐을 경우
       setVisible(true);
       setCurrentBtn('game');
-      socket.emit('startTimer', state.roomPW);
+      socket.emit('game_start', state.roomPW); // 게임 시작 이벤트
+      socket.emit('startTimer', state.roomPW); // 타이머 시작 이벤트
     } else if (result.status === 404) {
       alert(result.data.error);
     }
@@ -70,8 +71,13 @@ function WaitingRoom() {
     });
     socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
     socket.emit('getParticipants', state.roomPW); // 참여자 목록 요청
-    socket.on('updateParticipants', (students: Students[]) => {
-      setStudents(students);
+    socket.on('updateParticipants', (result: Students[] | string) => {
+      if (result === 'start') {
+        // 게임 시작일 경우
+        return;
+      } else {
+        setStudents(result as Students[]);
+      }
     });
     socket.on(
       'timerStarted',

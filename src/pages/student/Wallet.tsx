@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { css, keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
 import StudentLayout_ from '@components/student/layout';
@@ -17,6 +17,7 @@ import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 const socket = io('http://localhost:8000');
 
 function Game() {
+  const { state } = useLocation();
   const navigate = useNavigate();
   const [selectedNav] = useRecoilState(navbarState);
   const [modalState, setModalState] = useRecoilState(stockModalState);
@@ -31,7 +32,7 @@ function Game() {
     socket.on('connect', () => {
       console.log('connection server');
     });
-    socket.emit('room_connect', 'kkLBlX'); // 방 접속 이벤트 : 임시 패스워드 값 넣어둠.
+    socket.emit('room_connect', state.roomPW); // 방 접속 이벤트 : 임시 패스워드 값 넣어둠.
     socket.on('timerStarted', () => {
       // 타이머 시작되면 라운드 시작
       setFinish(false);
@@ -51,7 +52,7 @@ function Game() {
         visible: false,
       }));
     });
-  }, []);
+  }, [state.roomPW]);
 
   const onClickBlackBackground = (e: any) => {
     if (!popupRef.current || !popupRef.current.contains(e.target)) {
