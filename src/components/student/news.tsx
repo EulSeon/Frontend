@@ -1,16 +1,35 @@
-import React from 'react';
+import { getNewsList } from '@apis/api/wallet';
+import React, { useEffect } from 'react';
 import { styled } from 'styled-components';
+import { useRecoilState } from 'recoil';
+import { newsList } from '@states/walletInformation';
 
 function News() {
+  const [news, setNews] = useRecoilState(newsList);
+
+  // 뉴스 리스트 가져오기
+  const getNews = async () => {
+    const newsList = await getNewsList();
+    setNews(newsList.data);
+  };
+
+  useEffect(() => {
+    // 이미 뉴스 리스트를 가져온 경우에는 가져오지 말기
+    if (news.descriptions.length !== 0) {
+      return;
+    }
+    getNews();
+  }, []);
+
   return (
     <>
       <Contents>
         <List>
-          {new Array(20).fill(0).map((_, index) => {
+          {news.descriptions.map((news, index) => {
             return (
               <ListItem key={index}>
-                <p>A엔터 소속 배우 이OO 부산 국제영화제에서 남우주연상 수상</p>
-                <p>A엔터</p>
+                <p>{news}</p>
+                <p>회사이름</p>
               </ListItem>
             );
           })}
@@ -58,7 +77,6 @@ const ListItem = styled.li`
   border-bottom: 1px solid #000000;
   color: #000000;
   gap: 8px;
-  cursor: pointer;
 
   & > p:first-child {
     color: #000;
@@ -66,9 +84,6 @@ const ListItem = styled.li`
     font-style: normal;
     font-weight: 400;
     line-height: normal;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
   }
 
   & > p:last-child {
@@ -78,10 +93,6 @@ const ListItem = styled.li`
     font-style: normal;
     font-weight: 600;
     line-height: normal;
-  }
-
-  &:hover {
-    background: #efefef;
   }
 `;
 
