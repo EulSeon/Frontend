@@ -10,12 +10,21 @@ function News() {
   // 뉴스 리스트 가져오기
   const getNews = async () => {
     const newsList = await getNewsList();
-    setNews(newsList.data);
+    const nNewsList = newsList.data.descriptions.map(
+      (description: string, index: number) => {
+        return {
+          com_name: newsList.data.com_name[index],
+          description,
+          isGood: newsList.data.isGood[index],
+        };
+      }
+    );
+    setNews(nNewsList);
   };
 
   useEffect(() => {
     // 이미 뉴스 리스트를 가져온 경우에는 가져오지 말기
-    if (news.descriptions.length !== 0) {
+    if (news.length !== 0) {
       return;
     }
     getNews();
@@ -25,11 +34,11 @@ function News() {
     <>
       <Contents>
         <List>
-          {news.descriptions.map((news, index) => {
+          {news.map((item, index) => {
             return (
               <ListItem key={index}>
-                <p>{news}</p>
-                <p>회사이름</p>
+                <p>{item.description}</p>
+                <p>{item.com_name}</p>
               </ListItem>
             );
           })}
