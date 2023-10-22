@@ -84,9 +84,6 @@ const ListItem = styled.li`
     font-style: normal;
     font-weight: 400;
     line-height: normal;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
   }
 
   & > p:last-child {
