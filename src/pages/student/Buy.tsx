@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
-import { keyframes, styled } from 'styled-components';
+import { css, keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
 import { useRecoilState } from 'recoil';
 import { stockModalState } from '@states/modalState';
@@ -12,8 +12,15 @@ const socket = io('http://localhost:8000');
 
 function Buy() {
   const navigate = useNavigate();
-  const [value, setValue] = useState<string>('');
+  const [buyStock, setBuyStock] = useState<string>(''); // 구매할 주
   const [_, setModalState] = useRecoilState(stockModalState);
+  const [stockPrice, setStockPrice] = useState(31009); // 현재 1주당 가격
+  const [notice, setNotice] = useState<{
+    available: boolean | undefined;
+    content: string;
+  }>({ available: true, content: '' }); // 안내 문구
+  const [totalAsset, setTotalAsset] = useState(800000); // 가용자산
+  const [usingAsset, setUsingAsset] = useState<number>(0); // 사용할 금액
   const [timer, setTimer] = useState<{
     min: string | undefined;
     sec: string | undefined;
@@ -35,6 +42,32 @@ function Buy() {
   }, []);
 
   useEffect(() => {
+    if (buyStock.length === 0) {
+      // 몇 주를 살지 입력하지 않은 경우
+      setNotice({ available: undefined, content: `3주 보유중` });
+      setUsingAsset(0);
+    } else {
+      // 몇 주를 살지 입력한 경우 남은 가용자산 계산
+      const useAsset = Number(buyStock) * stockPrice; // 사용할 금액
+
+      if (totalAsset >= useAsset) {
+        // 가용자산이 충분한 경우
+        setNotice({
+          available: true,
+          content: `${useAsset.toLocaleString('ko-KR')}원을 사용할게요.`,
+        });
+      } else {
+        // 가용자산이 사용할 금액보다 적을 경우
+        setNotice({
+          available: false,
+          content: `잔액이 부족합니다.`,
+        });
+      }
+      setUsingAsset(useAsset);
+    }
+  }, [buyStock]);
+
+  useEffect(() => {
     return () => {
       setModalState((pre) => ({
         ...pre,
@@ -48,18 +81,20 @@ function Buy() {
       <StudentHeader />
       <Main>
         <PriceBox>
+          <p>{stockPrice.toLocaleString('ko-KR')}</p>
           <p>현재 1주당 가격</p>
-          <p>31,009</p>
         </PriceBox>
-        <BuyStock>
+        <BuyStock $value={buyStock} $available={notice.available}>
           <p>
-            {value.length === 0 ? <span></span> : null}
-            {value.length === 0 ? '몇 주를 살까요?' : value}
+            {buyStock.length === 0 ? <span></span> : null}
+            {buyStock.length === 0 ? '몇 주를 살까요?' : buyStock + '주'}
           </p>
-          <p>가용자산 800,000</p>
-          <p>00000원을 사용할게요</p>
+          <p>{notice.content}</p>
         </BuyStock>
-
+        <AvailableAssets>
+          <p>{(totalAsset - usingAsset).toLocaleString('ko-KR')}원</p>
+          <p>가용자산</p>
+        </AvailableAssets>
         <KeyPad>
           <Line>
             {new Array(3).fill(0).map((_, index) => {
@@ -67,7 +102,7 @@ function Buy() {
                 <button
                   key={index}
                   onClick={(e: any) => {
-                    setValue((pre) => pre + String(e.target.innerText));
+                    setBuyStock((pre) => pre + String(e.target.innerText));
                   }}
                 >
                   {index + 1}
@@ -81,7 +116,7 @@ function Buy() {
                 <button
                   key={index}
                   onClick={(e: any) => {
-                    setValue((pre) => pre + String(e.target.innerText));
+                    setBuyStock((pre) => pre + String(e.target.innerText));
                   }}
                 >
                   {index + 4}
@@ -95,7 +130,7 @@ function Buy() {
                 <button
                   key={index}
                   onClick={(e: any) => {
-                    setValue((pre) => pre + String(e.target.innerText));
+                    setBuyStock((pre) => pre + String(e.target.innerText));
                   }}
                 >
                   {index + 7}
@@ -107,14 +142,15 @@ function Buy() {
             <button></button>
             <button
               onClick={(e: any) => {
-                setValue((pre) => pre + String(e.target.innerText));
+                if (buyStock.length === 0) return; // 0주는 입력할 수 없도록
+                setBuyStock((pre) => pre + String(e.target.innerText));
               }}
             >
               0
             </button>
             <button
               onClick={() => {
-                setValue((pre) => pre.slice(0, -1));
+                setBuyStock((pre) => pre.slice(0, -1));
               }}
             >
               <img src="/icons/delete_icon.svg" />
@@ -122,7 +158,14 @@ function Buy() {
           </Line>
         </KeyPad>
         <Button>
-          <button>매수하기</button>
+          <button
+            onClick={() => {
+              alert('매수 완료');
+              navigate(-1);
+            }}
+          >
+            매수하기
+          </button>
         </Button>
         <RoundBox>
           <Round>
@@ -170,23 +213,23 @@ const PriceBox = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 16px 0 16px 20px;
+  padding: 16px 20px 16px 20px;
   gap: 8px;
 
   & > p:first-child {
     left: 20px;
     color: #000000;
-    font-size: 1.2rem;
+    font-size: 1.6rem;
     font-style: normal;
-    font-weight: 400;
+    font-weight: 600;
     line-height: normal;
   }
 
   & > p:last-child {
     color: #000000;
-    font-size: 1.6rem;
+    font-size: 1.2rem;
     font-style: normal;
-    font-weight: 600;
+    font-weight: 400;
     line-height: normal;
   }
 `;
@@ -200,22 +243,35 @@ const twinkle = keyframes`
   }
 `;
 
-const BuyStock = styled.div`
+const shake = keyframes`
+  0% {
+    transform: translate3d(-2px, 0px, 0);
+  }
+  100% {
+    transform: translate3d(2px, 0px, 0);
+  }
+`;
+
+const BuyStock = styled.div<{
+  $value: string;
+  $available: boolean | undefined;
+}>`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
   width: 100%;
-  padding: 0px 0px 143px 20px;
+  padding: 16px 20px 16px 20px;
   gap: 8px;
 
   & > p:first-child {
     display: flex;
     align-items: center;
-    color: rgba(0, 0, 0, 0.5);
+    color: ${(props) =>
+      props.$value.length === 0 ? 'rgba(0, 0, 0, 0.5)' : '#000000'};
     font-size: 2.4rem;
     font-style: normal;
-    font-weight: 400;
+    font-weight: 600;
     line-height: normal;
 
     & > span {
@@ -229,19 +285,27 @@ const BuyStock = styled.div`
 
   & > p:nth-child(2) {
     color: #000000;
-    font-size: 1.6rem;
-    font-style: normal;
-    font-weight: 600;
-    line-height: normal;
-  }
-
-  & > p:last-child {
-    color: #3f51b5;
+    color: ${(props) =>
+      props.$available === undefined
+        ? '#000000'
+        : props.$available
+        ? '#0038FF'
+        : '#ff0000'};
     font-size: 1.2rem;
     font-style: normal;
-    font-weight: 600;
+    font-weight: 400;
     line-height: normal;
+    animation: ${(props) =>
+      props.$available === false
+        ? css`
+            ${shake} 0.1s 0s 3
+          `
+        : ``};
   }
+`;
+
+const AvailableAssets = styled(PriceBox)`
+  padding: 16px 20px 62px 20px;
 `;
 
 const KeyPad = styled.div`
