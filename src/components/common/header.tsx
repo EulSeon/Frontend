@@ -9,8 +9,8 @@ function Header_() {
         <img src="/images/signatureLogo.svg" />
         <Navbar>
           <Link to="/">HOME</Link>
-          <Link to="/">ABOUT</Link>
-          <Link to="/">CONTACT</Link>
+          <Link to="/about">ABOUT</Link>
+          <Link to="/contact">CONTACT</Link>
         </Navbar>
       </Header>
     </HeaderLayout>

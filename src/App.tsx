@@ -9,6 +9,8 @@ import Buy from '@pages/student/Buy';
 import Sell from '@pages/student/Sell';
 import Wallet from '@pages/student/Wallet';
 import StudentMain from '@pages/student/Main';
+import About from '@pages/About';
+import Contact from '@pages/Contact';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Main />}></Route>
+          <Route path="/about" element={<About />}></Route>
+          <Route path="/contact" element={<Contact />}></Route>
           <Route path="/room/wait" element={<WaitingRoomLayout />}></Route>
           <Route path="/room/1/result" element={<GameResult />}></Route>
 
