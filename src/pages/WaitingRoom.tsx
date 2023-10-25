@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { styled } from 'styled-components';
+import { keyframes, styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
@@ -116,7 +116,7 @@ function WaitingRoom() {
         ) : null}
         {currentBtn === 'game' ? (
           <GameInProgress>
-            <img src="/images/defaultProfile.svg" />
+            <img src="/icons/loading_icon.png" />
             <div>
               <p>0라운드</p>
               <p>
@@ -289,6 +289,12 @@ const PassWord = styled.div`
   }
 `;
 
+const rotatedImage = () => keyframes`
+  100% {
+    transform: rotate(-360deg);
+  }
+`;
+
 const GameInProgress = styled.div`
   display: flex;
   flex-direction: column;
@@ -303,6 +309,7 @@ const GameInProgress = styled.div`
   & > img {
     width: 79.492px;
     height: 79.492px;
+    animation: ${rotatedImage} 1s infinite linear;
   }
 
   & > div {
