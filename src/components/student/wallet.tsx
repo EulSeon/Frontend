@@ -1,43 +1,92 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { styled } from 'styled-components';
 import { useRecoilState } from 'recoil';
 import { stockModalState } from '@states/modalState';
+import { currentRoomCode } from '@states/roomSetting';
+import { getUserInfo } from '@apis/api/wallet';
+
+interface StockList {
+  com_name: string;
+  buy_average: number;
+  count: number;
+  percent: number;
+}
+
+interface UserInfo {
+  profile_num: number;
+  total_asset: number;
+  total_roi: number;
+  total_stock_holding: number;
+  username: string;
+  using_asset: number;
+}
 
 function Wallet() {
-  const [currentComponent, setCurrentComponent] = useState(false); // 임시로 추가
-  const [modalState, setModalState] = useRecoilState(stockModalState);
+  const [, setModalState] = useRecoilState(stockModalState);
+  const [roomCode] = useRecoilState(currentRoomCode); // 방코드
+  const [stockList, setStockList] = useState<StockList[]>([]);
+  const [userInfo, setUserInfo] = useState<UserInfo>({
+    profile_num: 0,
+    total_asset: 0,
+    total_roi: 0,
+    total_stock_holding: 0,
+    username: '',
+    using_asset: 0,
+  });
+
+  const getUserInformation = async () => {
+    const info = await getUserInfo(roomCode as string);
+    console.log(info);
+    const listArray = Object.keys(info.data.stock_list).map(
+      (item) => info.data.stock_list[item]
+    ); // 객체 -> 배열
+    setUserInfo(info.data.user_info);
+    setStockList(listArray);
+  };
+
+  useEffect(() => {
+    getUserInformation();
+  }, []);
 
   return (
     <>
       <Profile>
-        <img src="/images/defaultProfile-gray1.svg" />
-        <p>2학년 4반 김유경</p>
+        {userInfo.profile_num === 0 ? (
+          <img src="/images/defaultProfile-gray1.svg" />
+        ) : null}
+        {userInfo.profile_num === 1 ? (
+          <img src="/images/defaultProfile-gray2.svg" />
+        ) : null}
+        {userInfo.profile_num === 2 ? (
+          <img src="/images/defaultProfile-gray3.svg" />
+        ) : null}
+        <p>{userInfo?.username}</p>
       </Profile>
 
       <Asset>
         <AssetBox>
           <Information>
             <p>총자산</p>
-            <p>2,000,000,000</p>
+            <p>{userInfo?.total_asset?.toLocaleString('ko-KR')}</p>
           </Information>
           <Information>
             <p>가용자산</p>
-            <p>1,000,000,000</p>
+            <p>{userInfo?.using_asset?.toLocaleString('ko-KR')}</p>
           </Information>
         </AssetBox>
         <AssetBox>
           <Information>
             <p>총평가손익</p>
-            <TotalIncome>1000%</TotalIncome>
+            <TotalIncome>{userInfo?.total_roi}%</TotalIncome>
           </Information>
           <Information>
             <p>보유주식총액</p>
-            <p>1,000,000,000</p>
+            <p>{userInfo?.total_stock_holding?.toLocaleString('ko-KR')}</p>
           </Information>
         </AssetBox>
       </Asset>
 
-      {currentComponent ? (
+      {stockList.length === 0 ? (
         <Contents_None>
           <p>
             뉴스를 분석하고 주가가 오를것 같은
@@ -49,28 +98,30 @@ function Wallet() {
         <Contents>
           <h3>주식 목록</h3>
           <List>
-            {new Array(20).fill(0).map((_, index) => {
-              return (
-                <ListItem
-                  key={index}
-                  onClick={() => {
-                    setModalState((pre) => ({
-                      ...pre,
-                      visible: !pre.visible,
-                    }));
-                  }}
-                >
-                  <div>
-                    <p>A엔터</p>
-                    <p>10주</p>
-                  </div>
-                  <div>
-                    <p>310,090</p>
-                    <p>+6.83%</p>
-                  </div>
-                </ListItem>
-              );
-            })}
+            {stockList.length
+              ? stockList.map((stock, index) => {
+                  return (
+                    <ListItem
+                      key={index}
+                      onClick={() => {
+                        setModalState((pre) => ({
+                          ...pre,
+                          visible: !pre.visible,
+                        }));
+                      }}
+                    >
+                      <div>
+                        <p>{stock.com_name}</p>
+                        <p>{stock.count}주</p>
+                      </div>
+                      <div>
+                        <p>{stock.buy_average.toLocaleString('ko-KR')}</p>
+                        <p>{stock.percent}%</p>
+                      </div>
+                    </ListItem>
+                  );
+                })
+              : null}
           </List>
         </Contents>
       )}
@@ -150,7 +201,7 @@ const Contents_None = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 360px;
+  height: 100%;
   background: #ffffff;
   border-radius: 16px;
 
@@ -174,6 +225,7 @@ const Contents = styled.div`
   border-radius: 16px;
 
   & > h3 {
+    text-align: center;
     color: #000000;
     font-size: 1.2rem;
     font-style: normal;
