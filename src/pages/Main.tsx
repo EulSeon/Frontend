@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
@@ -47,9 +46,8 @@ function Main_() {
 
 const MainLayout = styled.main`
   width: 100%;
-  height: 100%;
-  min-width: 1280px;
-  min-height: 100vh;
+  height: 100vh;
+  min-height: 600px;
   background: linear-gradient(120deg, #3f51b5, #00bbd4 100%);
   position: relative;
   overflow: hidden;
@@ -72,6 +70,16 @@ const Main = styled.main`
     font-weight: 400;
     line-height: normal;
   }
+
+  @media screen and (max-width: 768px) {
+    gap: 5vh;
+    align-items: center;
+
+    & > p {
+      font-size: 2vh;
+      white-space: nowrap;
+    }
+  }
 `;
 
 const BackgroundImage = styled.img`
@@ -86,6 +94,12 @@ const Logo = styled.img`
   align-self: center;
   width: 322px;
   height: 232px;
+
+  @media screen and (max-width: 768px) {
+    width: 25vh;
+    height: auto;
+    min-width: 170px;
+  }
 `;
 
 const CreateRoomBtn = styled.button`
@@ -102,10 +116,18 @@ const CreateRoomBtn = styled.button`
     border-radius: 38px;
     background-color: #ffffff;
     color: #000000;
-    -moz-transition: all, 0.5s;
-    -o-transition: all, 0.5s;
-    -webkit-transition: all, 0.5s;
-    transition: all, 0.5s;
+    -moz-transition:
+      background-color 0.5s,
+      color 0.5s;
+    -o-transition:
+      background-color 0.5s,
+      color 0.5s;
+    -webkit-transition:
+      background-color 0.5s,
+      color 0.5s;
+    transition:
+      background-color 0.5s,
+      color 0.5s;
 
     & > p {
       font-size: 2rem;
@@ -124,6 +146,20 @@ const CreateRoomBtn = styled.button`
 
     & > img {
       transition: filter, 0.5s;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    & > div {
+      width: 100%;
+      height: auto;
+      max-width: 274px;
+      padding: 10px 20px;
+
+      & > p {
+        font-size: 1.5rem;
+        white-space: nowrap;
+      }
     }
   }
 `;
