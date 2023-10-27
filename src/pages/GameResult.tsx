@@ -4,11 +4,34 @@ import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import { currentBtnState } from '../states/roomSetting';
 import { useRecoilState } from 'recoil';
+import { socket } from 'socket';
 
-const socket = io('http://localhost:8000');
+// 더미 데이터
+const data = [
+  {
+    round: 1,
+    rank: 1,
+    name: '20220631황을선',
+    totalAssets: 13293957,
+    roi: 157,
+  },
+  {
+    rank: 2,
+    name: '20220631황을선',
+    totalAssets: 13293957,
+    roi: 157,
+  },
+  {
+    rank: 3,
+    name: '20220631황을선',
+    totalAssets: 13293957,
+    roi: 157,
+  },
+];
+
+const header = ['라운드', '순위', '이름', '총 자산', '수익률'];
 
 function GameResult() {
   const { state } = useLocation();
@@ -16,9 +39,6 @@ function GameResult() {
   const [_, setCurrentBtn] = useRecoilState(currentBtnState); // 현재 선택된 버튼
 
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log('connection server');
-    });
     socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
   }, []);
 
@@ -33,9 +53,6 @@ function GameResult() {
           buttonInfo={{
             button1: {
               value: '결과 저장하기',
-              onClick: () => {
-                console.log('첫번째 버튼');
-              },
             },
             button2: {
               value: '다음 라운드',
@@ -46,6 +63,7 @@ function GameResult() {
               },
             },
           }}
+          result={{ data, header }}
         >
           <ListTitle>
             <h3>0라운드 랭킹</h3>

@@ -108,39 +108,52 @@ function Select_({
         </SelectBtn>
         <SelectOptions $visible={selectedVisible}>
           <Options $visible={selectedVisible}>
-            {new Array(count).fill(0).map((_, index) => {
-              const value = start + standard * index;
-              let minute = '0';
-              let seconds = '0';
-              if (title === '제한시간') {
-                const { min, sec } = convertSecondsToMinute(value);
-                minute = min;
-                seconds = sec;
-              }
-              return (
-                <>
-                  {title === '제한시간' ? (
+            {defaultValue !== '구분'
+              ? new Array(count).fill(0).map((_, index) => {
+                  const value = start + standard * index;
+                  let minute = '0';
+                  let seconds = '0';
+                  if (title === '제한시간') {
+                    const { min, sec } = convertSecondsToMinute(value);
+                    minute = min;
+                    seconds = sec;
+                  }
+                  return (
+                    <>
+                      {title === '제한시간' ? (
+                        <li
+                          key={index}
+                          onClick={(e: any) => {
+                            onClickSelectValue(e, value);
+                          }}
+                        >
+                          {minute + ':' + seconds}
+                        </li>
+                      ) : (
+                        <li
+                          key={index}
+                          onClick={(e: any) => {
+                            onClickSelectValue(e, value);
+                          }}
+                        >
+                          {value}
+                        </li>
+                      )}
+                    </>
+                  );
+                })
+              : ['자산별', '수익별'].map((item) => {
+                  return (
                     <li
-                      key={index}
+                      key={item}
                       onClick={(e: any) => {
-                        onClickSelectValue(e, value);
+                        onClickSelectValue(e, 0);
                       }}
                     >
-                      {minute + ':' + seconds}
+                      {item}
                     </li>
-                  ) : (
-                    <li
-                      key={index}
-                      onClick={(e: any) => {
-                        onClickSelectValue(e, value);
-                      }}
-                    >
-                      {value}
-                    </li>
-                  )}
-                </>
-              );
-            })}
+                  );
+                })}
           </Options>
         </SelectOptions>
       </Select>

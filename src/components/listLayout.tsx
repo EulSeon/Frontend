@@ -1,10 +1,11 @@
 import React from 'react';
 import { styled } from 'styled-components';
+import CsvDownloadButton from 'react-json-to-csv';
 
 interface ButtonInfoProps {
   button1: {
     value: string;
-    onClick: () => void;
+    onClick?: () => void;
   };
   button2?: {
     value: string;
@@ -18,6 +19,8 @@ interface ListLayoutProps {
   buttons?: boolean;
   buttonInfo: ButtonInfoProps;
   children?: React.ReactNode;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
 }
 
 function ListLayout_({
@@ -26,6 +29,7 @@ function ListLayout_({
   buttons = false,
   buttonInfo,
   children,
+  ...rest
 }: ListLayoutProps) {
   return (
     <ListLayout>
@@ -37,9 +41,31 @@ function ListLayout_({
       <Buttons>
         {buttons ? (
           <>
-            <TwoButton onClick={buttonInfo.button1.onClick}>
-              {buttonInfo.button1.value}
-            </TwoButton>
+            {buttonInfo.button1.value === '결과 저장하기' ? (
+              <TwoButton onClick={buttonInfo.button1.onClick}>
+                <CsvDownloadButton
+                  data={rest.result.data}
+                  filename="게임 결과.csv"
+                  delimiter=","
+                  headers={rest.result.header}
+                  style={{
+                    cursor: 'pointer',
+                    color: '#ffffff',
+                    fontSize: '2rem',
+                    fontWeight: '500',
+                    background: 'rgba(0,0,0,0)',
+                    width: '100%',
+                    height: '100%',
+                  }}
+                >
+                  결과 저장하기
+                </CsvDownloadButton>
+              </TwoButton>
+            ) : (
+              <TwoButton onClick={buttonInfo.button1.onClick}>
+                {buttonInfo.button1.value}
+              </TwoButton>
+            )}
             <TwoButton onClick={buttonInfo.button2?.onClick}>
               {buttonInfo.button2?.value}
             </TwoButton>
