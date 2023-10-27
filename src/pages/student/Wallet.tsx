@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { css, keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
 import StudentLayout_ from '@components/student/layout';
@@ -9,30 +9,27 @@ import Stock from '@components/student/stock';
 import News from '@components/student/news';
 import { useRecoilState } from 'recoil';
 import { navbarState } from '@states/navbarState';
-import { stockModalState } from '@states/modalState';
+import { stockModalState, stockModalVals } from '@states/modalState';
 import { finishBackgroundState } from '@states/backgroundState';
-import { io } from 'socket.io-client';
+import { currentRoomCode } from '@states/roomSetting';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
-
-const socket = io('http://localhost:8000');
+import { socket } from 'socket';
 
 function Game() {
-  const { state } = useLocation();
   const navigate = useNavigate();
   const [selectedNav] = useRecoilState(navbarState);
-  const [modalState, setModalState] = useRecoilState(stockModalState);
+  const [modalState, setModalState] = useRecoilState(stockModalState); // 모달 visible 상태
+  const [modalVals] = useRecoilState(stockModalVals); // 모달에 들어가는 값
   const [finish, setFinish] = useRecoilState(finishBackgroundState); // 라운드 종료 여부
   const popupRef = useRef<any>(null);
   const [timer, setTimer] = useState<{
     min: string | undefined;
     sec: string | undefined;
   }>({ min: undefined, sec: undefined }); // 타이머 시간
+  const [roomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
 
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log('connection server');
-    });
-    socket.emit('room_connect', state.roomPW); // 방 접속 이벤트 : 임시 패스워드 값 넣어둠.
+    socket.emit('room_connect', roomCode); // 방 접속 이벤트
     socket.on('timerStarted', () => {
       // 타이머 시작되면 라운드 시작
       setFinish(false);
@@ -52,7 +49,7 @@ function Game() {
         visible: false,
       }));
     });
-  }, [state.roomPW]);
+  }, []);
 
   const onClickBlackBackground = (e: any) => {
     if (!popupRef.current || !popupRef.current.contains(e.target)) {
@@ -81,8 +78,10 @@ function Game() {
   return (
     <StudentLayout_>
       <FinishBackground $visible={finish}>
-        <p>이번 라운드가 끝났습니다.</p>
-        <p>다음 라운드가 시작될 때까지 기다려주세요 ...</p>
+        <div>
+          <img src="/icons/loading_icon.png" />
+          <p>N / N라운드</p>
+        </div>
       </FinishBackground>
       <BlackBackground
         $visible={modalState.visible}
@@ -107,18 +106,29 @@ function Game() {
 
       <PopUP $visible={modalState.visible} ref={popupRef}>
         <span></span>
-        <h2>A 엔터</h2>
+        <div>
+          <h2>{modalVals.company_name}</h2>
+          {modalVals.kind === 'wallet' ? (
+            <h2>{modalVals.inStock}주 보유</h2>
+          ) : null}
+        </div>
         <Price>
           <div>
-            <p>전 라운드 가격</p>
-            <p>31,0000</p>
+            <p>
+              {modalVals.kind === 'wallet' ? '평균 매입가' : '전 라운드 가격'}
+            </p>
+            <p>
+              {modalVals.difference === 0
+                ? '-'
+                : modalVals.first_menu_price.toLocaleString('ko-KR')}
+            </p>
           </div>
           <div>
             <p>현 라운드 가격</p>
-            <p>46,5000</p>
+            <p>{modalVals.second_menu_price.toLocaleString('ko-KR')}</p>
           </div>
         </Price>
-        <PopUP_Notice>전 라운드보다 15,500원(+50%)이 올랐어요</PopUP_Notice>
+        <PopUP_Notice>{modalVals.info}</PopUP_Notice>
         {selectedNav === 'wallet' ? (
           <PopUP_Button>
             <button
@@ -171,27 +181,52 @@ function Game() {
   );
 }
 
+const rotatedImage = () => keyframes`
+  100% {
+    transform: rotate(-360deg);
+  }
+`;
+
 const FinishBackground = styled.div<{ $visible: boolean }>`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  opacity: 0.9;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(
-    108deg,
-    #3f51b5 4.42%,
-    #00bcd4 99.95%,
-    #03a9f4 99.95%
-  );
-  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.6);
   position: fixed;
   top: 0;
   bottom: 0;
   display: ${(props) => (props.$visible ? 'flex' : 'none')};
   font-size: 1.5rem;
   z-index: 5;
+
+  & > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 281px;
+    height: 159px;
+    background: #ffffff;
+    border-radius: 24px;
+    gap: 10px;
+
+    & > img {
+      width: 79.492px;
+      height: 79.492px;
+      animation: ${rotatedImage} 1s infinite linear;
+    }
+
+    & > p {
+      color: #000000;
+      font-size: 1.8rem;
+      font-style: normal;
+      font-weight: 400;
+      line-height: normal;
+    }
+  }
 `;
 
 const BlackBackground = styled.div<{ $visible: boolean }>`
@@ -294,14 +329,28 @@ const PopUP = styled.div<{ $visible: boolean }>`
     top: 12px;
   }
 
-  & > h2 {
-    color: #000000;
-    font-size: 2.4rem;
-    font-style: normal;
-    font-weight: 600;
-    line-height: normal;
-    padding: 56px 0 18px 24px;
+  & > div:nth-child(2) {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     width: 100%;
+
+    & > h2 {
+      color: #000000;
+      font-size: 2.4rem;
+      font-style: normal;
+      font-weight: 600;
+      line-height: normal;
+      padding: 56px 0 18px 0;
+
+      &:first-child {
+        padding-left: 24px;
+      }
+
+      &:last-child {
+        padding-right: 24px;
+      }
+    }
   }
 `;
 
@@ -319,12 +368,25 @@ const Price = styled.div`
     justify-content: space-between;
     width: 100%;
 
-    & > p {
+    & > p:first-child {
       color: #000000;
       font-size: 1.6rem;
       font-style: normal;
       font-weight: 400;
       line-height: normal;
+    }
+    & > p:last-child {
+      color: #000000;
+      font-size: 1.6rem;
+      font-style: normal;
+      font-weight: 600;
+      line-height: normal;
+    }
+
+    &:nth-child(2) {
+      & > p:last-child {
+        color: #ff0000;
+      }
     }
   }
 `;
