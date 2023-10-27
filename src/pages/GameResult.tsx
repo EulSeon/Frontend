@@ -55,7 +55,7 @@ function GameResult() {
                 defaultValue="라운드별"
               />
               <Select_
-                set={{ start: 5, count: 6, standard: 1 }}
+                set={{ start: 5, count: 2, standard: 1 }}
                 defaultValue="구분"
               />
             </div>
@@ -78,7 +78,7 @@ function GameResult() {
                     <tr key={index}>
                       <td>
                         <Profile src="/images/defaultProfile.svg" />
-                        <p>20220631 황을선</p>
+                        <p>황을선선선</p>
                       </td>
                       <td>13,293,957</td>
                       <td>157%</td>
@@ -97,21 +97,29 @@ function GameResult() {
 const GameResultLayout = styled.main`
   width: 100%;
   height: 100%;
-  min-width: 1280px;
   min-height: 100vh;
   background: linear-gradient(120deg, #3f51b5, #00bbd4 100%);
-  position: relative;
-  overflow: hidden;
 `;
 
 const WaitingRoomList = styled.div`
   display: flex;
-  width: 1280px;
+  width: 100%;
+  height: 100%;
+  max-width: 600px;
   margin: 0 auto;
   padding: 0 25px;
   gap: 30px;
-  width: 600px;
-  height: 756px;
+
+  & > div:nth-child(1) {
+    height: unset;
+    min-height: 500px;
+  }
+
+  @media screen and (max-width: 768px) {
+    & > div:nth-child(1) {
+      padding-top: 50px;
+    }
+  }
 `;
 
 const ListTitle = styled.div`
@@ -130,6 +138,21 @@ const ListTitle = styled.div`
   & > div {
     display: flex;
     gap: 24.66px;
+  }
+
+  @media screen and (max-width: 768px) {
+    flex-wrap: wrap;
+    gap: 10px;
+
+    & > h3 {
+      font-size: 1.5rem;
+    }
+
+    & > div {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
   }
 `;
 
@@ -167,19 +190,26 @@ const ResultHeader = styled.div`
     width: 20%;
     justify-content: flex-end;
   }
+
+  @media screen and (max-width: 768px) {
+    padding: 0 30px;
+    font-size: 3vw;
+    white-space: nowrap;
+  }
 `;
 
 const ResultContent = styled.div`
   border-radius: 25px;
   background: rgba(255, 255, 255, 0.4);
   height: 100%;
+  max-height: 520px;
+  padding: 0 50px;
   overflow-y: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
   }
-  padding: 0 50px;
 
   & > table {
     width: 100%;
@@ -209,6 +239,7 @@ const ResultContent = styled.div`
           line-height: normal;
           gap: 20px;
           padding: 10px 0;
+          white-space: nowrap;
         }
 
         & > td:nth-child(2) {
@@ -218,6 +249,7 @@ const ResultContent = styled.div`
           font-style: normal;
           font-weight: 400;
           line-height: normal;
+          padding: 0 10px;
         }
 
         & > td:nth-child(3) {
@@ -231,12 +263,46 @@ const ResultContent = styled.div`
       }
     }
   }
+
+  @media screen and (max-width: 768px) {
+    padding: 0 30px;
+    max-height: 400px;
+
+    & > table {
+      & > tbody {
+        & > tr {
+          & > td:nth-child(1) {
+            font-size: 3vw;
+            gap: 15px;
+            justify-content: center;
+          }
+
+          & > td:nth-child(2) {
+            font-size: 2vw;
+          }
+
+          & > td:nth-child(3) {
+            font-size: 3vw;
+          }
+        }
+      }
+    }
+  }
 `;
 
 const Profile = styled.img`
   width: 34.5px;
   height: 34.5px;
   border-radius: 100px;
+
+  @media screen and (max-width: 768px) {
+    width: 30px;
+    height: 30px;
+  }
+
+  @media screen and (max-width: 390px) {
+    display: none;
+  }
 `;
 
 export default GameResult;
