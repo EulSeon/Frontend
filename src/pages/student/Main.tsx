@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
-import { styled, keyframes } from 'styled-components';
+import { styled, keyframes, css } from 'styled-components';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -37,6 +37,7 @@ function Main_() {
     text: '프로필을 눌러 설정해주세요',
     state: undefined,
   });
+  const [toastMessageState, setToastMessageState] = useState(false);
   const [allowSlidePrev, setAllowSlidePrev] = useState(true); // 이전 슬라이드 넘어가기 가능 여부
   const [allowSlideNext, setAllowSlideNext] = useState(true); // 다음 슬라이드 넘어가기 가능 여부
   const [profileVisible, setProfileVisible] = useState(false); // ProfileSelector visible
@@ -102,6 +103,9 @@ function Main_() {
     socket.on('connect', () => {
       console.log('connection server');
     });
+  }, []);
+
+  useEffect(() => {
     socket.on('updateParticipants', (result: Students[] | string) => {
       if (result === 'start') {
         // 게임 시작일 경우
@@ -187,47 +191,61 @@ function Main_() {
           <SecondPage $state={nameState} $codeVisible={nameState}>
             <SetMyInfo $nameState={nameState}>
               {currentProfile === 0 ? (
-                <img
-                  src="/images/defaultProfile-blue1.svg"
-                  onClick={() => {
-                    setProfileVisible(true);
-                  }}
-                />
+                <div>
+                  <img
+                    src="/images/defaultProfile-blue1.svg"
+                    onClick={() => {
+                      setProfileVisible(true);
+                    }}
+                  />
+                  <img src="/icons/modify-profile_icon.svg" />
+                </div>
               ) : null}
               {currentProfile === 1 ? (
-                <img
-                  src="/images/defaultProfile-blue2.svg"
-                  onClick={() => {
-                    setProfileVisible(true);
-                  }}
-                />
+                <div>
+                  <img
+                    src="/images/defaultProfile-blue2.svg"
+                    onClick={() => {
+                      setProfileVisible(true);
+                    }}
+                  />
+                  <img src="/icons/modify-profile_icon.svg" />
+                </div>
               ) : null}
               {currentProfile === 2 ? (
-                <img
-                  src="/images/defaultProfile-blue3.svg"
-                  onClick={() => {
-                    setProfileVisible(true);
-                  }}
-                />
+                <div>
+                  <img
+                    src="/images/defaultProfile-blue3.svg"
+                    onClick={() => {
+                      setProfileVisible(true);
+                    }}
+                  />
+                  <img src="/icons/modify-profile_icon.svg" />
+                </div>
               ) : null}
               <NameForm
                 $nameState={nameState}
                 // onSubmit={handleOnNameKeyPress}
               >
-                <input
-                  type="text"
-                  placeholder="이름을 입력해주세요"
-                  readOnly={nameState}
-                  onKeyDown={handleOnNameKeyPress}
-                  onClick={() => {
-                    if (nameState) {
-                      setNameState(false);
-                    }
-                  }}
-                  onChange={(e: any) => {
-                    setName(e.target.value);
-                  }}
-                />
+                <div>
+                  <input
+                    type="text"
+                    placeholder="이름을 입력해주세요"
+                    readOnly={nameState}
+                    onKeyDown={handleOnNameKeyPress}
+                    maxLength={5}
+                    onClick={() => {
+                      if (nameState) {
+                        setNameState(false);
+                      }
+                    }}
+                    onChange={(e: any) => {
+                      setName(e.target.value);
+                    }}
+                  />
+                  <img src="icons/edit_icon.svg" />
+                </div>
+
                 <button type="submit">테스트</button>
               </NameForm>
               <RoomCodeForm
@@ -276,10 +294,17 @@ function Main_() {
                 />
               </Profiles>
             </ProfileSelector>
+
+            <ToastMessage $state={toastMessageState}>
+              <p>방에서 나가졌습니다.</p>
+            </ToastMessage>
           </SecondPage>
         </SwiperSlide>
         <SwiperSlide>
           <ThirdPage>
+            <div>
+              <img src="icons/arrow-left-white_icon.svg" />
+            </div>
             <StudentList>
               <List>
                 {students.map((student, index) => {
@@ -344,6 +369,15 @@ const roomcode_slide = (state: boolean) => keyframes`
     display: ${state ? '' : 'none'}; 
   }
 `;
+const editIcon_slide = (state: boolean) => keyframes`
+  from {
+    transform: ${state ? 'translateY(40px)' : 'translateY(-20px)'};
+  }
+
+  to {
+    transform: ${state ? 'translateY(0px)' : 'translateY(20px)'};
+  }
+`;
 
 const MainLayout = styled.main`
   background: linear-gradient(
@@ -355,6 +389,25 @@ const MainLayout = styled.main`
   position: relative;
   height: calc(var(--vh, 1vh) * 100);
   min-height: 600px; // 모바일에서 pagination 올라오는 거 방지
+`;
+
+const ToastMessage = styled.div<{ $state: boolean }>`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1d5190;
+  width: 200px;
+  height: 50px;
+  position: absolute;
+  bottom: 70px;
+  border-radius: 30px;
+  opacity: ${(props) => (props.$state ? '0.9' : '0')};
+  transition: all 2s;
+
+  & > p {
+    color: #ffffff;
+    font-size: 1.4rem;
+  }
 `;
 
 const FirstPage = styled.div`
@@ -407,12 +460,22 @@ const SetMyInfo = styled.div<{
   gap: ${(props) => (props.$nameState ? '16px' : '36px')};
   position: relative;
 
-  & > img {
-    display: block;
-    width: 100px;
-    height: 100px;
-    border-radius: 100px;
+  & > div {
+    position: relative;
     animation: ${(props) => profile_slide(props.$nameState)} 1s 0s forwards;
+
+    & > img:nth-child(1) {
+      display: block;
+      width: 100px;
+      height: 100px;
+      border-radius: 100px;
+    }
+
+    & > img:nth-child(2) {
+      position: absolute;
+      bottom: 0;
+      right: 5px;
+    }
   }
 `;
 
@@ -423,39 +486,56 @@ const NameForm = styled.form<{
   justify-content: center;
   width: 100%;
 
-  & > input {
-    width: 75%;
+  & > div {
+    background: none;
+    position: relative;
+    width: 100%;
     max-width: 296px;
-    display: block;
-    border-radius: 100px;
-    background: ${(props) =>
-      props.$nameState ? 'rgba(255, 255, 255, 0.4)' : '#ffffff'};
-    padding: 16px 44px;
-    color: ${(props) => (props.$nameState ? '#ffffff' : 'rgba(0, 0, 0, 0.5)')};
-    font-size: 1.6rem;
-    font-style: normal;
-    font-weight: 400;
-    line-height: normal;
-    text-align: center;
-    animation: ${(props) => name_slide(props.$nameState)} 1s 0s forwards;
 
-    ::placeholder {
-      color: rgba(0, 0, 0, 0.5);
-    }
+    & > input {
+      width: 100%;
+      display: block;
+      border-radius: 100px;
+      background: ${(props) =>
+        props.$nameState ? 'rgba(255, 255, 255, 0.4)' : '#ffffff'};
+      padding: 16px 44px;
+      color: ${(props) =>
+        props.$nameState ? '#ffffff' : 'rgba(0, 0, 0, 0.5)'};
+      font-size: 1.6rem;
+      font-style: normal;
+      font-weight: 400;
+      line-height: normal;
+      text-align: center;
+      animation: ${(props) => name_slide(props.$nameState)} 1s 0s forwards;
 
-    &:focus {
-      background-color: rgba(255, 255, 255, 0.4);
-      color: #ffffff;
-      -moz-transition: all, 1s;
-      -o-transition: all, 1s;
-      -webkit-transition: all, 1s;
-      transition: all, 1s;
+      ::placeholder {
+        color: rgba(0, 0, 0, 0.5);
+      }
 
-      &::placeholder {
+      &:focus {
+        background-color: rgba(255, 255, 255, 0.4);
         color: #ffffff;
+        -moz-transition: all, 1s;
+        -o-transition: all, 1s;
+        -webkit-transition: all, 1s;
+        transition: all, 1s;
+
+        &::placeholder {
+          color: #ffffff;
+        }
       }
     }
+
+    // edit 아이콘
+    & > img {
+      position: absolute;
+      top: 35%;
+      right: 80px;
+      display: ${(props) => (props.$nameState ? 'block' : 'none')};
+      animation: ${(props) => editIcon_slide(props.$nameState)} 1s 0s forwards;
+    }
   }
+
   // submit 버튼
   & > button {
     display: none;
@@ -512,6 +592,15 @@ const RoomCodeForm = styled.form<{
   }
 `;
 
+const shake = keyframes`
+  0% {
+    transform: translate3d(-2px, 0px, 0);
+  }
+  100% {
+    transform: translate3d(2px, 0px, 0);
+  }
+`;
+
 const Notice = styled.p<{ $state: boolean | undefined }>`
   display: flex;
   justify-content: center;
@@ -527,6 +616,12 @@ const Notice = styled.p<{ $state: boolean | undefined }>`
   width: 100%;
   background-color: ${(props) =>
     props.$state === false ? 'rgba(255, 0, 0, 0.3)' : 'none'};
+  animation: ${(props) =>
+    props.$state === false
+      ? css`
+          ${shake} 0.1s 0s 3
+        `
+      : ``};
 `;
 
 const ProfileSelector = styled.div<{ $visible: boolean }>`
@@ -540,6 +635,7 @@ const ProfileSelector = styled.div<{ $visible: boolean }>`
     props.$visible ? 'translateY(-0%)' : 'translateY(100%)'};
   transition: ${(props) =>
     props.$visible ? 'transform 0.6s ease-out' : 'transform 0.6s ease-in'};
+  z-index: 1;
 `;
 
 const SlidingDoor = styled.div`
@@ -577,6 +673,16 @@ const ThirdPage = styled.div`
   width: 100%;
   height: 100%;
   gap: 32px;
+  position: relative;
+
+  // 뒤로가기 아이콘
+  & > div:nth-child(1) {
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+  }
 
   & > p {
     color: #ffffff;
