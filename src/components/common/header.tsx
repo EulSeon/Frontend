@@ -30,6 +30,16 @@ const Header = styled.div`
   max-width: 1280px;
   margin: 0 auto;
   padding: 32px;
+
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+    gap: 40px;
+    padding: 32px 30px 0 30px;
+
+    & > img {
+      width: 120px;
+    }
+  }
 `;
 
 const Navbar = styled.nav`
@@ -37,6 +47,7 @@ const Navbar = styled.nav`
   flex-direction: row;
   justify-content: space-between;
   width: 361px;
+  max-width: 361px;
 
   & > a {
     color: #ffffff;
@@ -47,6 +58,17 @@ const Navbar = styled.nav`
     text-decoration: none;
     z-index: 1;
     cursor: pointer;
+  }
+
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    justify-content: center;
+    gap: 10vw;
+    overflow: auto;
+
+    & > a {
+      font-size: 1.3rem;
+    }
   }
 `;
 
