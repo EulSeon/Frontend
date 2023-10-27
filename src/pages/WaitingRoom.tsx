@@ -6,13 +6,11 @@ import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
 import { useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import { useRecoilState } from 'recoil';
 import { roomSet, currentBtnState, systemVisible } from '../states/roomSetting';
 import { updateRoomInfo } from '@apis/api/game';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
-
-const socket = io('http://localhost:8000');
+import { socket } from 'socket';
 
 interface Students {
   user_id: number;
@@ -66,9 +64,6 @@ function WaitingRoom() {
   };
 
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log('connection server');
-    });
     socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
     socket.emit('getParticipants', state.roomPW); // 참여자 목록 요청
     socket.on('updateParticipants', (result: Students[] | string) => {
