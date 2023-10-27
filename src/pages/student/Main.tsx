@@ -7,10 +7,11 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import './swipeStyles.css';
 import { participateGameRoom } from '@apis/api/game';
-import { io } from 'socket.io-client';
+import { socket } from 'socket';
 import { useNavigate } from 'react-router-dom';
-
-const socket = io('http://localhost:8000');
+import { useRecoilState } from 'recoil';
+import { currentRoomCode } from '@states/roomSetting';
+import { Beforeunload } from 'react-beforeunload';
 
 interface Students {
   user_id: number;
@@ -37,7 +38,7 @@ function Main_() {
     text: '프로필을 눌러 설정해주세요',
     state: undefined,
   });
-  const [toastMessageState, setToastMessageState] = useState(false);
+  const [toastMessageState, setToastMessageState] = useState(false); // 토스트 메시지 상태
   const [allowSlidePrev, setAllowSlidePrev] = useState(true); // 이전 슬라이드 넘어가기 가능 여부
   const [allowSlideNext, setAllowSlideNext] = useState(true); // 다음 슬라이드 넘어가기 가능 여부
   const [profileVisible, setProfileVisible] = useState(false); // ProfileSelector visible
@@ -45,6 +46,7 @@ function Main_() {
 
   const [name, setName] = useState(''); // 학생 이름
   const [roomCode, setRoomCode] = useState(''); // 방코드
+  const [, setPersistRoomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
   const [students, setStudents] = useState<Students[] | []>([]); // 현재 접속한 학생들 목록
 
   // 이름 입력칸에서 엔터를 눌렀을 경우
@@ -90,6 +92,7 @@ function Main_() {
         // 사용자가 성공적으로 게임방에 참여되었다면 참여자 리스트 업데이트
         socket.emit('room_connect', roomCode); // 방 접속 이벤트
         socket.emit('getParticipants', roomCode);
+        setPersistRoomCode(roomCode);
         setAllowSlideNext(true);
         setPwCompare({
           text: '패스워드가 일치합니다.',
@@ -100,23 +103,23 @@ function Main_() {
   };
 
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log('connection server');
-    });
-  }, []);
+    if (pwCompare.state) {
+      socket.on('updateParticipants', (result: Students[] | string) => {
+        if (result === 'start') {
+          // 게임 시작일 경우
+          navigate('wallet', {
+            state: { roomPW: roomCode },
+          });
+        } else {
+          setStudents(result as Students[]);
+        }
+      });
+    }
 
-  useEffect(() => {
-    socket.on('updateParticipants', (result: Students[] | string) => {
-      if (result === 'start') {
-        // 게임 시작일 경우
-        navigate('wallet', {
-          state: { roomPW: roomCode },
-        });
-      } else {
-        setStudents(result as Students[]);
-      }
-    });
-  }, [roomCode]);
+    return () => {
+      socket.removeAllListeners('updateParticipants');
+    };
+  }, [pwCompare]);
 
   // 모바일 브라우저 네비게이션바 같은 것들 고려해서 추가
   const getScreenSize = () => {
@@ -154,182 +157,214 @@ function Main_() {
     };
   }, [profileSelectorRef]);
 
+  useEffect(() => {
+    // 새로고침의 경우를 위해 roomCode 초기화
+    // 세션에 해당하는 유저 제거 + 세션 제거
+    setPersistRoomCode(undefined);
+  }, []);
+
+  useEffect(() => {
+    if (toastMessageState === true) {
+      setTimeout(async () => {
+        setToastMessageState(false);
+      }, 3000);
+    }
+  }, [toastMessageState]);
+
   return (
-    <MainLayout>
-      <Swiper
-        onSwiper={(swiper: any) => {
-          swiperRef.current = swiper;
-        }}
-        pagination={true}
-        modules={[Pagination]}
-        allowSlideNext={allowSlideNext}
-        allowSlidePrev={allowSlidePrev}
-        onSlideChange={() => {
-          if ((swiperRef.current as any).activeIndex === 0) {
-            // 첫 번째 슬라이드
-            setAllowSlideNext(true);
-          } else if ((swiperRef.current as any).activeIndex === 1) {
-            // 두 번째 슬라이드
-            setAllowSlideNext(false);
-          } else if ((swiperRef.current as any).activeIndex === 2) {
-            // 세 번째 슬라이드
-            setAllowSlideNext(false);
-            setAllowSlidePrev(false);
-          }
-        }}
-      >
-        <SwiperSlide>
-          <FirstPage>
-            <img src="/images/mainLogo.svg" />
-            <p>
-              학생들도 주식에 쉽게 다가갈 수 있는
-              <br /> 모의주식 서비스 E - STOCK 입니다.
-            </p>
-          </FirstPage>
-        </SwiperSlide>
-        <SwiperSlide>
-          <SecondPage $state={nameState} $codeVisible={nameState}>
-            <SetMyInfo $nameState={nameState}>
-              {currentProfile === 0 ? (
-                <div>
-                  <img
-                    src="/images/defaultProfile-blue1.svg"
-                    onClick={() => {
-                      setProfileVisible(true);
-                    }}
-                  />
-                  <img src="/icons/modify-profile_icon.svg" />
-                </div>
-              ) : null}
-              {currentProfile === 1 ? (
-                <div>
-                  <img
-                    src="/images/defaultProfile-blue2.svg"
-                    onClick={() => {
-                      setProfileVisible(true);
-                    }}
-                  />
-                  <img src="/icons/modify-profile_icon.svg" />
-                </div>
-              ) : null}
-              {currentProfile === 2 ? (
-                <div>
-                  <img
-                    src="/images/defaultProfile-blue3.svg"
-                    onClick={() => {
-                      setProfileVisible(true);
-                    }}
-                  />
-                  <img src="/icons/modify-profile_icon.svg" />
-                </div>
-              ) : null}
-              <NameForm
-                $nameState={nameState}
-                // onSubmit={handleOnNameKeyPress}
-              >
-                <div>
+    <Beforeunload onBeforeunload={() => '새로고침하면 방에서 나가집니다.'}>
+      <MainLayout>
+        <Swiper
+          onSwiper={(swiper: any) => {
+            swiperRef.current = swiper;
+          }}
+          pagination={true}
+          modules={[Pagination]}
+          allowSlideNext={allowSlideNext}
+          allowSlidePrev={allowSlidePrev}
+          onSlideChange={() => {
+            if ((swiperRef.current as any).activeIndex === 0) {
+              // 첫 번째 슬라이드
+              setAllowSlideNext(true);
+            } else if ((swiperRef.current as any).activeIndex === 1) {
+              // 두 번째 슬라이드
+              setAllowSlideNext(false);
+            } else if ((swiperRef.current as any).activeIndex === 2) {
+              // 세 번째 슬라이드
+              setAllowSlideNext(false);
+              setAllowSlidePrev(false);
+            }
+          }}
+        >
+          <SwiperSlide>
+            <FirstPage>
+              <img src="/images/mainLogo.svg" />
+              <p>
+                학생들도 주식에 쉽게 다가갈 수 있는
+                <br /> 모의주식 서비스 E - STOCK 입니다.
+              </p>
+            </FirstPage>
+          </SwiperSlide>
+          <SwiperSlide>
+            <SecondPage $state={nameState} $codeVisible={nameState}>
+              <SetMyInfo $nameState={nameState}>
+                {currentProfile === 0 ? (
+                  <div>
+                    <img
+                      src="/images/defaultProfile-blue1.svg"
+                      onClick={() => {
+                        setProfileVisible(true);
+                      }}
+                    />
+                    <img src="/icons/modify-profile_icon.svg" />
+                  </div>
+                ) : null}
+                {currentProfile === 1 ? (
+                  <div>
+                    <img
+                      src="/images/defaultProfile-blue2.svg"
+                      onClick={() => {
+                        setProfileVisible(true);
+                      }}
+                    />
+                    <img src="/icons/modify-profile_icon.svg" />
+                  </div>
+                ) : null}
+                {currentProfile === 2 ? (
+                  <div>
+                    <img
+                      src="/images/defaultProfile-blue3.svg"
+                      onClick={() => {
+                        setProfileVisible(true);
+                      }}
+                    />
+                    <img src="/icons/modify-profile_icon.svg" />
+                  </div>
+                ) : null}
+                <NameForm
+                  $nameState={nameState}
+                  // onSubmit={handleOnNameKeyPress}
+                >
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="이름을 입력해주세요"
+                      readOnly={nameState}
+                      onKeyDown={handleOnNameKeyPress}
+                      maxLength={5}
+                      onClick={() => {
+                        if (nameState) {
+                          setNameState(false);
+                        }
+                      }}
+                      onChange={(e: any) => {
+                        setName(e.target.value);
+                      }}
+                    />
+                    <img src="icons/edit_icon.svg" />
+                  </div>
+
+                  <button type="submit">테스트</button>
+                </NameForm>
+                <RoomCodeForm
+                  $nameState={nameState}
+                  $codeState={codeState}
+                  // onSubmit={handleOnCodeKeyPress}
+                >
                   <input
                     type="text"
-                    placeholder="이름을 입력해주세요"
-                    readOnly={nameState}
-                    onKeyDown={handleOnNameKeyPress}
-                    maxLength={5}
-                    onClick={() => {
-                      if (nameState) {
-                        setNameState(false);
-                      }
-                    }}
+                    placeholder="입장 코드를 입력하세요"
+                    disabled={!nameState ? !codeState : codeState}
+                    onKeyDown={handleOnCodeKeyPress}
+                    maxLength={6}
                     onChange={(e: any) => {
-                      setName(e.target.value);
+                      setRoomCode(e.target.value);
                     }}
                   />
-                  <img src="icons/edit_icon.svg" />
-                </div>
+                  <button type="submit">테스트</button>
+                </RoomCodeForm>
+              </SetMyInfo>
 
-                <button type="submit">테스트</button>
-              </NameForm>
-              <RoomCodeForm
-                $nameState={nameState}
-                $codeState={codeState}
-                // onSubmit={handleOnCodeKeyPress}
+              <Notice $state={pwCompare.state}>{pwCompare.text}</Notice>
+
+              <ProfileSelector
+                ref={profileSelectorRef}
+                $visible={profileVisible}
               >
-                <input
-                  type="text"
-                  placeholder="입장 코드를 입력하세요"
-                  disabled={!nameState ? !codeState : codeState}
-                  onKeyDown={handleOnCodeKeyPress}
-                  maxLength={6}
-                  onChange={(e: any) => {
-                    setRoomCode(e.target.value);
-                  }}
-                />
-                <button type="submit">테스트</button>
-              </RoomCodeForm>
-            </SetMyInfo>
+                <SlidingDoor>
+                  <span></span>
+                </SlidingDoor>
+                <Profiles>
+                  <img
+                    src="/images/defaultProfile-gray1.svg"
+                    onClick={() => {
+                      setCurrentProfile(0);
+                    }}
+                  />
+                  <img
+                    src="/images/defaultProfile-gray2.svg"
+                    onClick={() => {
+                      setCurrentProfile(1);
+                    }}
+                  />
+                  <img
+                    src="/images/defaultProfile-gray3.svg"
+                    onClick={() => {
+                      setCurrentProfile(2);
+                    }}
+                  />
+                </Profiles>
+              </ProfileSelector>
 
-            <Notice $state={pwCompare.state}>{pwCompare.text}</Notice>
-
-            <ProfileSelector ref={profileSelectorRef} $visible={profileVisible}>
-              <SlidingDoor>
-                <span></span>
-              </SlidingDoor>
-              <Profiles>
-                <img
-                  src="/images/defaultProfile-gray1.svg"
-                  onClick={() => {
-                    setCurrentProfile(0);
-                  }}
-                />
-                <img
-                  src="/images/defaultProfile-gray2.svg"
-                  onClick={() => {
-                    setCurrentProfile(1);
-                  }}
-                />
-                <img
-                  src="/images/defaultProfile-gray3.svg"
-                  onClick={() => {
-                    setCurrentProfile(2);
-                  }}
-                />
-              </Profiles>
-            </ProfileSelector>
-
-            <ToastMessage $state={toastMessageState}>
-              <p>방에서 나가졌습니다.</p>
-            </ToastMessage>
-          </SecondPage>
-        </SwiperSlide>
-        <SwiperSlide>
-          <ThirdPage>
-            <div>
-              <img src="icons/arrow-left-white_icon.svg" />
-            </div>
-            <StudentList>
-              <List>
-                {students.map((student, index) => {
-                  return (
-                    <li key={index}>
-                      {student.profile_num === 0 ? (
-                        <img src="/images/defaultProfile-blue1.svg" />
-                      ) : null}
-                      {student.profile_num === 1 ? (
-                        <img src="/images/defaultProfile-blue2.svg" />
-                      ) : null}
-                      {student.profile_num === 2 ? (
-                        <img src="/images/defaultProfile-blue3.svg" />
-                      ) : null}
-                      <p>{student.user_name}</p>
-                    </li>
-                  );
-                })}
-              </List>
-            </StudentList>
-            <p>곧 게임이 시작됩니다.</p>
-          </ThirdPage>
-        </SwiperSlide>
-      </Swiper>
-    </MainLayout>
+              <ToastMessage $state={toastMessageState}>
+                <p>방에서 나가졌습니다.</p>
+              </ToastMessage>
+            </SecondPage>
+          </SwiperSlide>
+          <SwiperSlide>
+            <ThirdPage>
+              <div
+                onClick={() => {
+                  // 방 나가는 기능도 추가
+                  setPwCompare({
+                    text: '프로필을 눌러 설정해주세요.',
+                    state: undefined,
+                  });
+                  setPersistRoomCode(undefined);
+                  setCodeState(false);
+                  setAllowSlidePrev(true);
+                  setToastMessageState(true);
+                  (swiperRef.current as any).slidePrev();
+                }}
+              >
+                <img src="icons/arrow-left-white_icon.svg" />
+              </div>
+              <StudentList>
+                <List>
+                  {students.map((student, index) => {
+                    return (
+                      <li key={index}>
+                        {student.profile_num === 0 ? (
+                          <img src="/images/defaultProfile-blue1.svg" />
+                        ) : null}
+                        {student.profile_num === 1 ? (
+                          <img src="/images/defaultProfile-blue2.svg" />
+                        ) : null}
+                        {student.profile_num === 2 ? (
+                          <img src="/images/defaultProfile-blue3.svg" />
+                        ) : null}
+                        <p>{student.user_name}</p>
+                      </li>
+                    );
+                  })}
+                </List>
+              </StudentList>
+              <p>곧 게임이 시작됩니다.</p>
+            </ThirdPage>
+          </SwiperSlide>
+        </Swiper>
+      </MainLayout>
+    </Beforeunload>
   );
 }
 

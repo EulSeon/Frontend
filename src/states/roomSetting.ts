@@ -32,3 +32,10 @@ export const systemVisible = atom<boolean>({
   default: false,
   effects_UNSTABLE: [persistAtom],
 });
+
+// 게임방 패스워드
+export const currentRoomCode = atom<string | undefined>({
+  key: 'roomCode',
+  default: undefined,
+  effects_UNSTABLE: [persistAtom],
+});
