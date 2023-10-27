@@ -3,17 +3,18 @@ import React, { useEffect, useState } from 'react';
 import { css, keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
 import { useRecoilState } from 'recoil';
-import { stockModalState } from '@states/modalState';
-import { io } from 'socket.io-client';
+import { stockModalState, stockModalVals } from '@states/modalState';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 import { useNavigate } from 'react-router-dom';
-
-const socket = io('http://localhost:8000');
+import { purchaseStock } from '@apis/api/wallet';
+import { currentRoomCode } from '@states/roomSetting';
+import { socket } from 'socket';
 
 function Buy() {
   const navigate = useNavigate();
   const [buyStock, setBuyStock] = useState<string>(''); // 구매할 주
   const [_, setModalState] = useRecoilState(stockModalState);
+  const [modalVals] = useRecoilState(stockModalVals); // 모달에 있는 값들
   const [stockPrice, setStockPrice] = useState(31009); // 현재 1주당 가격
   const [notice, setNotice] = useState<{
     available: boolean | undefined;
@@ -25,11 +26,18 @@ function Buy() {
     min: string | undefined;
     sec: string | undefined;
   }>({ min: undefined, sec: undefined }); // 타이머 시간
+  const [roomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
+
+  const purchase = async () => {
+    const result = await purchaseStock(modalVals.id as number, {
+      purchase_num: Number(buyStock),
+      round_num: 1,
+      pwd: roomCode as string,
+    });
+    console.log(result);
+  };
 
   useEffect(() => {
-    socket.on('connect', () => {
-      console.log('connection server');
-    });
     socket.emit('room_connect', 'kkLBlX'); // 방 접속 이벤트 : 임시 패스워드 값 넣어둠.
     socket.on('timerTick', (info: any) => {
       // 타이머 시간 가는 중 ...
@@ -160,6 +168,7 @@ function Buy() {
         <Button>
           <button
             onClick={() => {
+              purchase();
               alert('매수 완료');
               navigate(-1);
             }}

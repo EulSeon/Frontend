@@ -43,3 +43,23 @@ export const getNewsList = async () => {
     };
   }
 };
+
+interface InfoProps {
+  purchase_num: number; // 주식 구매 개수
+  round_num: number; // 현재 라운드
+  pwd: string; // 방코드
+}
+
+// 매수하기
+export const purchaseStock = async (id: number, info: InfoProps) => {
+  try {
+    const { data, status } = await defaultInstance.post(`/stocks/${id}`, info);
+    return { data, status };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (e: any) {
+    return {
+      status: e.response.status,
+      error: e.response.data.error,
+    };
+  }
+};
