@@ -1,21 +1,53 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { styled } from 'styled-components';
 import { useRecoilState } from 'recoil';
-import { stockModalState } from '@states/modalState';
+import { stockModalState, stockModalVals } from '@states/modalState';
+import { currentRoomCode } from '@states/roomSetting';
+import { getStockList } from '@apis/api/wallet';
+
+interface StockList {
+  company_name: string;
+  currentPrice: number;
+  difference: number;
+  percent: number;
+  previousPrice: number;
+}
 
 function Stock() {
-  const [modalState, setModalState] = useRecoilState(stockModalState);
+  const [, setModalState] = useRecoilState(stockModalState); // 모달 visible
+  const [, setModalVals] = useRecoilState(stockModalVals); // 모달창 값
+  const [roomCode] = useRecoilState(currentRoomCode); // 방코드
+  const [stockList, setStockList] = useState<StockList[]>([]); // 주식 목록
+
+  const _getStockList = async () => {
+    const list = await getStockList(roomCode as string);
+    setStockList(list.data);
+  };
+
+  useEffect(() => {
+    _getStockList();
+  }, []);
 
   return (
     <>
       <Contents>
         <h3>주식 목록</h3>
         <List>
-          {new Array(20).fill(0).map((_, index) => {
+          {stockList.map((stock, index) => {
             return (
               <ListItem
                 key={index}
                 onClick={() => {
+                  setModalVals({
+                    id: index + 1,
+                    kind: 'stock',
+                    company_name: stock.company_name,
+                    inStock: undefined,
+                    first_menu_price: stock.previousPrice,
+                    second_menu_price: stock.currentPrice,
+                    info: `전 라운드가 보다 ${stock.difference}원(${stock.percent}%)이 올랐어요`,
+                    difference: stock.difference,
+                  });
                   setModalState((pre) => ({
                     ...pre,
                     visible: !pre.visible,
@@ -23,11 +55,11 @@ function Stock() {
                 }}
               >
                 <div>
-                  <p>A엔터</p>
+                  <p>{stock.company_name}</p>
                 </div>
                 <div>
-                  <p>310,090</p>
-                  <p>+6.83%</p>
+                  <p>{stock.currentPrice.toLocaleString('ko-KR')}</p>
+                  <p>{stock.percent}%</p>
                 </div>
               </ListItem>
             );
