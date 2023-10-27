@@ -151,7 +151,13 @@ function Select_({
 const SelectLayout = styled.div`
   display: flex;
   flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 16px;
+
+  @media screen and (max-width: 768px) {
+    gap: 5px;
+  }
 `;
 
 const Title = styled.h3<{ $visible: boolean }>`
@@ -162,6 +168,10 @@ const Title = styled.h3<{ $visible: boolean }>`
   font-weight: 400;
   line-height: normal;
   width: 70px;
+
+  @media screen and (max-width: 768px) {
+    font-size: 1.5rem;
+  }
 `;
 
 const Select = styled.div`
@@ -204,11 +214,22 @@ const SelectBtn = styled.button<{ $visible: boolean }>`
       transition: all, 0.5s;
     }
   }
+
+  @media screen and (max-width: 768px) {
+    & > div {
+      font-size: 1.5rem;
+
+      & > img {
+        width: 15px;
+      }
+    }
+  }
 `;
 
 const SelectOptions = styled.div<{ $visible: boolean }>`
   visibility: ${(props) => (props.$visible ? 'visible' : 'hidden')};
-  height: 170px;
+  height: auto;
+  max-height: 170px;
   list-style: none;
   background-color: #a7c2e4;
   border-radius: 7px;
@@ -242,6 +263,12 @@ const Options = styled.ul<{ $visible: boolean }>`
       border-radius: 7px;
       opacity: ${(props) => (props.$visible ? '1' : '0.7')};
       transition: all, 0.5s;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    & > li {
+      font-size: 1.5rem;
     }
   }
 `;

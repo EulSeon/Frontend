@@ -240,6 +240,23 @@ function WaitingRoom() {
             </UserList>
             <ListImage2 src="/images/participantImage.svg" />
           </ListLayout_>
+          <Buttons>
+            <button
+              onClick={() => {
+                setVisible(true);
+                setCurrentBtn('password');
+              }}
+            >
+              PASSWORD
+            </button>
+            <button
+              onClick={() => {
+                updateRoomInformation();
+              }}
+            >
+              GAME START
+            </button>
+          </Buttons>
         </WaitingRoomList>
       </Main>
     </WaitingRoomLayout>
@@ -249,24 +266,24 @@ function WaitingRoom() {
 const WaitingRoomLayout = styled.main`
   width: 100%;
   height: 100%;
-  min-width: 1280px;
   min-height: 100vh;
   background: linear-gradient(120deg, #3f51b5, #00bbd4 100%);
   position: relative;
-  overflow: hidden;
 `;
 
 const BlackBackground = styled.div<{ $visible: boolean }>`
   display: ${(props) => (props.$visible ? 'flex' : 'none')};
   justify-content: center;
   align-items: center;
-  width: 100vw;
+  width: 100%;
   height: 100%;
-  min-width: 1280px;
-  min-height: 100vh;
   background-color: rgba(0, 0, 0, 0.36);
   position: absolute;
-  z-index: 2;
+  z-index: 3;
+
+  @media screen and (max-width: 768px) {
+    position: fixed;
+  }
 `;
 
 const PassWord = styled.div`
@@ -286,6 +303,19 @@ const PassWord = styled.div`
     line-height: normal;
     letter-spacing: 51.2px; // 마지막 글자에도 간격 처리 됨.
     text-indent: 51.2px; // 따라서 들여쓰기 기능 추가
+  }
+
+  @media screen and (max-width: 768px) {
+    width: 80%;
+    height: auto;
+    max-width: 400px;
+    padding: 30px 0;
+
+    & > p {
+      letter-spacing: 20px;
+      text-indent: 20px;
+      font-size: 5vw;
+    }
   }
 `;
 
@@ -315,6 +345,7 @@ const GameInProgress = styled.div`
   & > div {
     display: flex;
     gap: 80px;
+
     & > p {
       color: #000000;
       font-size: 4.8rem;
@@ -324,6 +355,32 @@ const GameInProgress = styled.div`
 
       &:nth-child(2) {
         width: 130px;
+      }
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    height: auto;
+    width: 80%;
+    gap: 40px;
+    padding: 40px 0;
+
+    & > img {
+      width: 50px;
+      height: 50px;
+    }
+
+    & > div {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+
+      & > p {
+        font-size: 3rem;
+
+        &:nth-child(2) {
+          width: 80px;
+        }
       }
     }
   }
@@ -348,6 +405,17 @@ const GameOver = styled.div`
     font-style: normal;
     font-weight: 400;
     line-height: normal;
+  }
+
+  @media screen and (max-width: 768px) {
+    height: auto;
+    width: 80%;
+
+    & > p {
+      height: unset;
+      font-size: 6vw;
+      padding: 50px 0;
+    }
   }
 `;
 
@@ -381,12 +449,19 @@ const OptionBox = styled.div`
       color: #ffffff;
     }
   }
+
+  @media screen and (max-width: 768px) {
+    height: unset;
+
+    & > button {
+      font-size: 4vw;
+      padding: 20px 0;
+    }
+  }
 `;
 
 const Main = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 28px;
 `;
 
 const WaitingRoomList = styled.div`
@@ -395,6 +470,72 @@ const WaitingRoomList = styled.div`
   margin: 0 auto;
   padding: 0 25px;
   gap: 30px;
+
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+    gap: 0;
+
+    & > div:nth-child(1) {
+      height: auto;
+      min-height: unset;
+      max-height: unset;
+      padding-top: 50px;
+      z-index: 2;
+
+      & > div:nth-child(3) {
+        display: none;
+      }
+    }
+
+    & > div:nth-child(2) {
+      height: 500px;
+      min-height: unset;
+      max-height: unset;
+
+      & > div:nth-child(3) {
+        display: none;
+      }
+    }
+  }
+`;
+
+const Buttons = styled.div`
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 20px;
+
+  & > button {
+    width: 100%;
+    height: 50px;
+    color: #ffffff;
+    font-size: 2rem;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow: 0px 4px 25px 0px rgba(0, 0, 0, 0.25);
+    -moz-transition: background, 0.3s;
+    -o-transition: background, 0.3s;
+    -webkit-transition: background, 0.3s;
+    transition: background, 0.3s;
+    cursor: pointer;
+
+    &:focus {
+      background-color: #a7c2e4;
+    }
+
+    &:hover {
+      border-radius: 25px;
+      background: #a7c2e4;
+      box-shadow: 0px 4px 25px 0px rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    display: flex;
+  }
 `;
 
 const SelectList = styled.div`
@@ -405,12 +546,20 @@ const SelectList = styled.div`
   left: 37px;
   top: 65px;
   z-index: 1;
+
+  @media screen and (max-width: 768px) {
+    position: static;
+  }
 `;
 
 const ListImage = styled.img`
   align-self: center;
   position: absolute;
   bottom: 91px;
+
+  @media screen and (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const UserList = styled.div`
@@ -446,6 +595,17 @@ const UserProfile = styled.div`
     line-height: normal;
     white-space: nowrap;
   }
+
+  @media screen and (max-width: 768px) {
+    & > img {
+      width: 40px;
+      height: 40px;
+    }
+
+    & > p {
+      font-size: 1.5rem;
+    }
+  }
 `;
 
 const ListImage2 = styled.img`
@@ -454,6 +614,12 @@ const ListImage2 = styled.img`
   bottom: 91px;
   opacity: 0.3;
   pointer-events: none;
+
+  @media screen and (max-width: 768px) {
+    width: 200px;
+    bottom: 20px;
+    right: 20px;
+  }
 `;
 
 export default WaitingRoom;

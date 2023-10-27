@@ -67,6 +67,11 @@ const ListLayout = styled.div`
   gap: 27px;
   padding-top: 3vh;
   padding-bottom: 5vh;
+
+  @media screen and (max-width: 768px) {
+    gap: 15px;
+    padding-bottom: 2vh;
+  }
 `;
 
 const Title = styled.div`
@@ -87,6 +92,17 @@ const Title = styled.div`
     font-weight: 600;
     line-height: normal;
   }
+
+  @media screen and (max-width: 768px) {
+    & > img {
+      width: 20px;
+      height: 20px;
+    }
+
+    & > h2 {
+      font-size: 1.5rem;
+    }
+  }
 `;
 
 const List = styled.div<{ $title: string }>`
@@ -100,13 +116,17 @@ const List = styled.div<{ $title: string }>`
   padding: ${(props) =>
     props.$title === '결과 조회' ? '37px 21px' : '37px 33px'};
   position: relative;
-  overflow: hidden;
   border-radius: 25px;
 `;
 
 const Buttons = styled.div`
   display: flex;
   gap: 29px;
+
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+    gap: 10px;
+  }
 `;
 
 const TwoButton = styled.button`
@@ -130,6 +150,10 @@ const TwoButton = styled.button`
     border-radius: 25px;
     background: #a7c2e4;
     box-shadow: 0px 4px 25px 0px rgba(0, 0, 0, 0.25);
+  }
+
+  @media screen and (max-width: 768px) {
+    width: 100%;
   }
 `;
 
