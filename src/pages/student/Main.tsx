@@ -165,6 +165,7 @@ function Main_() {
 
   useEffect(() => {
     if (toastMessageState === true) {
+      (swiperRef.current as any).slidePrev();
       setTimeout(async () => {
         setToastMessageState(false);
       }, 3000);
@@ -334,7 +335,6 @@ function Main_() {
                   setCodeState(false);
                   setAllowSlidePrev(true);
                   setToastMessageState(true);
-                  (swiperRef.current as any).slidePrev();
                 }}
               >
                 <img src="icons/arrow-left-white_icon.svg" />
