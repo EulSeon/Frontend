@@ -1,15 +1,22 @@
-import { getNewsList } from '@apis/api/wallet';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { styled } from 'styled-components';
 import { useRecoilState } from 'recoil';
-import { newsList } from '@states/walletInformation';
+import { currentRoomCode } from '@states/roomSetting';
+import { getNewsList } from '@apis/api/wallet';
+import { useQuery } from 'react-query';
+
+interface NewsList {
+  com_name: string;
+  description: string;
+  isGood: number;
+}
 
 function News() {
-  const [news, setNews] = useRecoilState(newsList);
+  const [roomCode] = useRecoilState(currentRoomCode); // 방코드
 
   // 뉴스 리스트 가져오기
   const getNews = async () => {
-    const newsList = await getNewsList();
+    const newsList = await getNewsList(roomCode as string);
     const nNewsList = newsList.data.descriptions.map(
       (description: string, index: number) => {
         return {
@@ -19,29 +26,24 @@ function News() {
         };
       }
     );
-    setNews(nNewsList);
+    return nNewsList;
   };
 
-  useEffect(() => {
-    // 이미 뉴스 리스트를 가져온 경우에는 가져오지 말기
-    if (news.length !== 0) {
-      return;
-    }
-    getNews();
-  }, []);
+  const { data: newsList } = useQuery<NewsList[]>('newsList', getNews); // 뉴스 리스트
 
   return (
     <>
       <Contents>
         <List>
-          {news.map((item, index) => {
-            return (
-              <ListItem key={index}>
-                <p>{item.description}</p>
-                <p>{item.com_name}</p>
-              </ListItem>
-            );
-          })}
+          {newsList &&
+            newsList.map((news, index) => {
+              return (
+                <ListItem key={index}>
+                  <p>{news.description}</p>
+                  <p>{news.com_name}</p>
+                </ListItem>
+              );
+            })}
         </List>
       </Contents>
     </>
