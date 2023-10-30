@@ -6,7 +6,7 @@ import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import './swipeStyles.css';
-import { participateGameRoom } from '@apis/api/game';
+import { leaveGameRoom, participateGameRoom } from '@apis/api/game';
 import { socket } from 'socket';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
@@ -46,7 +46,7 @@ function Main_() {
 
   const [name, setName] = useState(''); // 학생 이름
   const [roomCode, setRoomCode] = useState(''); // 방코드
-  const [, setPersistRoomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
+  const [persistRoomCode, setPersistRoomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
   const [students, setStudents] = useState<Students[] | []>([]); // 현재 접속한 학생들 목록
 
   // 이름 입력칸에서 엔터를 눌렀을 경우
@@ -171,6 +171,14 @@ function Main_() {
       }, 3000);
     }
   }, [toastMessageState]);
+
+  const leaveRoom = async () => {
+    const result = await leaveGameRoom(persistRoomCode as string);
+    if (result.status !== 200) {
+      console.error('오류 발생. 게임방에서 나가지 못했습니다.');
+    }
+    socket.emit('getParticipants', roomCode);
+  };
 
   return (
     <Beforeunload onBeforeunload={() => '새로고침하면 방에서 나가집니다.'}>
@@ -327,6 +335,7 @@ function Main_() {
               <div
                 onClick={() => {
                   // 방 나가는 기능도 추가
+                  leaveRoom();
                   setPwCompare({
                     text: '프로필을 눌러 설정해주세요.',
                     state: undefined,
