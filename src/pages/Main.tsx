@@ -1,13 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import Footer from '@components/common/footer';
 import { getGameRoomPassword } from '@apis/api/game';
 import { networkErrorAlert } from '@utils/customAlert';
+import {
+  currentBtnState,
+  currentRound,
+  resultCondition,
+  roomSet,
+  systemVisible,
+} from '@states/roomSetting';
+import { useResetRecoilState } from 'recoil';
 
 function Main_() {
   const navigate = useNavigate();
+  const resetCurrentBtnState = useResetRecoilState(currentBtnState);
+  const resetResultCondition = useResetRecoilState(resultCondition);
+  const resetRoomSet = useResetRecoilState(roomSet);
+  const resetSystemVisible = useResetRecoilState(systemVisible);
+  const resetcurrentRound = useResetRecoilState(currentRound);
 
   const onClickCreateRoomBtn = async () => {
     // 게임방 비밀번호 요청
@@ -21,6 +34,14 @@ function Main_() {
     }
     navigate('/room/wait', { state: { roomPW: roomPW.data.room_code } });
   };
+
+  useEffect(() => {
+    resetCurrentBtnState();
+    resetResultCondition();
+    resetRoomSet();
+    resetSystemVisible();
+    resetcurrentRound();
+  }, []);
 
   return (
     <MainLayout>
