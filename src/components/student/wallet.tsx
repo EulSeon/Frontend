@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { styled } from 'styled-components';
 import { useRecoilState } from 'recoil';
-import { stockModalState } from '@states/modalState';
+import { stockModalState, stockModalVals } from '@states/modalState';
 import { currentRoomCode } from '@states/roomSetting';
 import { getUserInfo } from '@apis/api/wallet';
+import { useQuery } from 'react-query';
 
 interface StockList {
   com_name: string;
   buy_average: number;
   count: number;
+  current_price: number;
+  difference_percent: number;
+  difference_price: number;
+  id: string;
   percent: number;
 }
 
@@ -22,71 +27,83 @@ interface UserInfo {
 }
 
 function Wallet() {
-  const [, setModalState] = useRecoilState(stockModalState);
+  const [, setModalState] = useRecoilState(stockModalState); // 모달 visible
+  const [, setModalVals] = useRecoilState(stockModalVals); // 모달창 값
   const [roomCode] = useRecoilState(currentRoomCode); // 방코드
   const [stockList, setStockList] = useState<StockList[]>([]);
-  const [userInfo, setUserInfo] = useState<UserInfo>({
-    profile_num: 0,
-    total_asset: 0,
-    total_roi: 0,
-    total_stock_holding: 0,
-    username: '',
-    using_asset: 0,
-  });
 
   const getUserInformation = async () => {
     const info = await getUserInfo(roomCode as string);
-    console.log(info);
-    const listArray = Object.keys(info.data.stock_list).map(
-      (item) => info.data.stock_list[item]
-    ); // 객체 -> 배열
-    setUserInfo(info.data.user_info);
-    setStockList(listArray);
+    if (info.status === 500) {
+      alert('오류가 발생했습니다.');
+      return;
+    }
+
+    return info.data;
   };
 
+  const { data } = useQuery<
+    | {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        stock_list: any | undefined;
+        user_info: UserInfo | undefined;
+      }
+    | undefined
+  >('userInfo', getUserInformation);
+
   useEffect(() => {
-    getUserInformation();
-  }, []);
+    if (data && data?.stock_list) {
+      const stockList = Object.keys(data.stock_list).map((item) => {
+        const test = data.stock_list[item];
+        test.id = item;
+        return data.stock_list[item];
+      });
+      setStockList(stockList);
+    }
+  }, [data?.stock_list]);
 
   return (
     <>
       <Profile>
-        {userInfo.profile_num === 0 ? (
+        {data?.user_info?.profile_num === 0 ? (
           <img src="/images/defaultProfile-gray1.svg" />
         ) : null}
-        {userInfo.profile_num === 1 ? (
+        {data?.user_info?.profile_num === 1 ? (
           <img src="/images/defaultProfile-gray2.svg" />
         ) : null}
-        {userInfo.profile_num === 2 ? (
+        {data?.user_info?.profile_num === 2 ? (
           <img src="/images/defaultProfile-gray3.svg" />
         ) : null}
-        <p>{userInfo?.username}</p>
+        <p>{data?.user_info?.username}</p>
       </Profile>
 
       <Asset>
         <AssetBox>
           <Information>
             <p>총자산</p>
-            <p>{userInfo?.total_asset?.toLocaleString('ko-KR')}</p>
+            <p>{data?.user_info?.total_asset?.toLocaleString('ko-KR')}</p>
           </Information>
           <Information>
             <p>가용자산</p>
-            <p>{userInfo?.using_asset?.toLocaleString('ko-KR')}</p>
+            <p>{data?.user_info?.using_asset?.toLocaleString('ko-KR')}</p>
           </Information>
         </AssetBox>
+
         <AssetBox>
           <Information>
             <p>총평가손익</p>
-            <TotalIncome>{userInfo?.total_roi}%</TotalIncome>
+            <TotalIncome>{data?.user_info?.total_roi}%</TotalIncome>
           </Information>
           <Information>
             <p>보유주식총액</p>
-            <p>{userInfo?.total_stock_holding?.toLocaleString('ko-KR')}</p>
+            <p>
+              {data?.user_info?.total_stock_holding?.toLocaleString('ko-KR')}
+            </p>
           </Information>
         </AssetBox>
       </Asset>
 
-      {stockList.length === 0 ? (
+      {data?.stock_list && Object.keys(data?.stock_list).length === 0 ? (
         <Contents_None>
           <p>
             뉴스를 분석하고 주가가 오를것 같은
@@ -99,11 +116,28 @@ function Wallet() {
           <h3>주식 목록</h3>
           <List>
             {stockList.length
-              ? stockList.map((stock, index) => {
+              ? stockList.map((stock: StockList, index: number) => {
                   return (
                     <ListItem
+                      $color={
+                        stock.percent > 0
+                          ? 'red'
+                          : stock.percent === 0
+                          ? 'black'
+                          : 'blue'
+                      }
                       key={index}
                       onClick={() => {
+                        setModalVals({
+                          id: Number(stock.id),
+                          kind: 'wallet',
+                          company_name: stock.com_name,
+                          inStock: stock.count,
+                          first_menu_price: stock.buy_average,
+                          second_menu_price: stock.current_price,
+                          info: `전 라운드가 보다 ${stock.difference_price}원(${stock.percent}%)이 올랐어요`,
+                          difference: stock.difference_price,
+                        });
                         setModalState((pre) => ({
                           ...pre,
                           visible: !pre.visible,
@@ -244,7 +278,7 @@ const List = styled.ul`
   }
 `;
 
-const ListItem = styled.li`
+const ListItem = styled.li<{ $color: string }>`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -290,7 +324,7 @@ const ListItem = styled.li`
 
     & > p:last-child {
       font-size: 1.2rem;
-      color: red;
+      color: ${(props) => props.$color};
       font-weight: 400;
     }
   }
