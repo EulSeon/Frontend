@@ -7,8 +7,13 @@ import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
 import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
-import { roomSet, currentBtnState, systemVisible } from '../states/roomSetting';
-import { updateRoomInfo } from '@apis/api/game';
+import {
+  roomSet,
+  currentBtnState,
+  systemVisible,
+  currentRound,
+} from '../states/roomSetting';
+import { goNextRound, saveGameResult, updateRoomInfo } from '@apis/api/game';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 import { socket } from 'socket';
 
@@ -36,6 +41,7 @@ function WaitingRoom() {
   const [currentBtn, setCurrentBtn] = useRecoilState(currentBtnState); // 현재 선택된 버튼
   const [students, setStudents] = useState<Students[] | []>([]); // 현재 접속한 학생들 목록
   const [roomSetting] = useRecoilState(roomSet);
+  const [round, setRound] = useRecoilState(currentRound); // 현재 라운드
   const [timer, setTimer] = useState<{
     min: string | undefined;
     sec: string | undefined;
@@ -63,6 +69,22 @@ function WaitingRoom() {
     }
   };
 
+  // 다음 라운드로 넘어가는 기능
+  const _goNextRound = async () => {
+    const result = await goNextRound(state.roomPW);
+    if (result.status === 200) {
+      alert('라운드가 종료되었습니다.');
+      return;
+    }
+    if (result.status === 500) {
+      alert('오류가 발생했습니다. 다시 시도해주세요');
+      return;
+    }
+    setCurrentBtn('game');
+    setTimer({ min: undefined, sec: undefined });
+    socket.emit('startTimer', state.roomPW);
+  };
+
   useEffect(() => {
     socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
     socket.emit('getParticipants', state.roomPW); // 참여자 목록 요청
@@ -74,22 +96,40 @@ function WaitingRoom() {
         setStudents(result as Students[]);
       }
     });
-    socket.on(
-      'timerStarted',
-      (info: { startTime: number; duration: number }) => {
-        console.log(info); // 시작시간, 지속시간
-      }
-    );
+    socket.on('timerStarted', () => {
+      socket.emit('get_round', state.roomPW); // 라운드 요청 이벤트
+    });
     socket.on('timerTick', (remainingTime: number) => {
       // 타이머 시간 가는 중 ...
       const { min, sec } = convertSecondsToMinute(remainingTime);
       setTimer({ min, sec });
     });
-    socket.on('timerEnded', () => {
-      // 타이머가 끝났을 경우
-      setCurrentBtn('gameover');
+
+    socket.on('notify_round', (round: number) => {
+      // 현재 라운드 받아오기
+      setRound(round);
     });
   }, []);
+
+  useEffect(() => {
+    socket.on('timerEnded', (currentRound: number) => {
+      // 타이머가 끝났을 경우
+      setCurrentBtn('gameover');
+      _saveGameResult(currentRound);
+    });
+
+    return () => {
+      socket.removeAllListeners('timerEnded');
+    };
+  }, []); // round 바뀌는 것을 timerEnded 이벤트에 적용시키기 위해
+
+  // 게임 결과 저장하기
+  const _saveGameResult = async (currentRound: number) => {
+    const result = await saveGameResult(state.roomPW, {
+      round_num: currentRound,
+    });
+    // console.log(result);
+  };
 
   const onClickBlackBackground = (e: any) => {
     if (
@@ -113,7 +153,7 @@ function WaitingRoom() {
           <GameInProgress>
             <img src="/icons/loading_icon.png" />
             <div>
-              <p>0라운드</p>
+              <p>{round}라운드</p>
               <p>
                 {timer.min !== undefined && timer.sec !== undefined
                   ? timer.min + ':' + timer.sec
@@ -137,9 +177,7 @@ function WaitingRoom() {
               </button>
               <button
                 onClick={() => {
-                  setCurrentBtn('game');
-                  setTimer({ min: undefined, sec: undefined });
-                  socket.emit('startTimer', state.roomPW);
+                  _goNextRound();
                 }}
               >
                 다음 라운드
@@ -167,7 +205,7 @@ function WaitingRoom() {
           >
             <SelectList>
               <Select_
-                title="라운드"
+                title={{ value: '라운드', visible: true }}
                 set={{ start: 5, count: 6, standard: 1 }}
                 defaultValue={
                   roomSetting.round_num
@@ -176,7 +214,7 @@ function WaitingRoom() {
                 }
               />
               <Select_
-                title="제한시간"
+                title={{ value: '제한시간', visible: true }}
                 set={{ start: 30, count: 20, standard: 30 }}
                 defaultValue={
                   roomSetting.time_limit
@@ -189,7 +227,7 @@ function WaitingRoom() {
                 }
               />
               <Select_
-                title="시드머니"
+                title={{ value: '시드머니', visible: true }}
                 set={{ start: 100, count: 19, standard: 50 }}
                 defaultValue={
                   roomSetting.seed
