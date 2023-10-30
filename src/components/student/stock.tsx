@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { styled } from 'styled-components';
 import { useRecoilState } from 'recoil';
 import { stockModalState, stockModalVals } from '@states/modalState';
 import { currentRoomCode } from '@states/roomSetting';
 import { getStockList } from '@apis/api/wallet';
+import { useQuery } from 'react-query';
 
 interface StockList {
   company_name: string;
@@ -17,25 +18,29 @@ function Stock() {
   const [, setModalState] = useRecoilState(stockModalState); // 모달 visible
   const [, setModalVals] = useRecoilState(stockModalVals); // 모달창 값
   const [roomCode] = useRecoilState(currentRoomCode); // 방코드
-  const [stockList, setStockList] = useState<StockList[]>([]); // 주식 목록
 
   const _getStockList = async () => {
     const list = await getStockList(roomCode as string);
-    setStockList(list.data);
+    return list.data;
   };
 
-  useEffect(() => {
-    _getStockList();
-  }, []);
+  const { data: stockList } = useQuery<StockList[]>('stockList', _getStockList); // 주식 목록
 
   return (
     <>
       <Contents>
         <h3>주식 목록</h3>
         <List>
-          {stockList.map((stock, index) => {
+          {stockList?.map((stock, index) => {
             return (
               <ListItem
+                $color={
+                  stock.percent > 0
+                    ? 'red'
+                    : stock.percent === 0
+                    ? 'black'
+                    : 'blue'
+                }
                 key={index}
                 onClick={() => {
                   setModalVals({
@@ -99,7 +104,7 @@ const List = styled.ul`
   }
 `;
 
-const ListItem = styled.li`
+const ListItem = styled.li<{ $color: string }>`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -141,7 +146,7 @@ const ListItem = styled.li`
 
     & > p:last-child {
       font-size: 1.2rem;
-      color: red;
+      color: ${(props) => props.$color};
       font-weight: 400;
     }
   }
