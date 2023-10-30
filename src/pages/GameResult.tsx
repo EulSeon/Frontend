@@ -32,6 +32,17 @@ function GameResult() {
   const [round] = useRecoilState(currentRound); // 현재 라운드
   const [condition, setCondition] = useRecoilState(resultCondition); // 게임 결과 조회 조건
 
+  useEffect(() => {
+    if (!state || !state.roomPW) {
+      console.error('게임방 패스워드가 존재하지 않습니다.');
+      navigate('/', { replace: true });
+    }
+  }, []);
+
+  if (!state || !state.roomPW) {
+    return <></>;
+  }
+
   // 게임 결과 조회하기
   const checkResult = async () => {
     const result = await checkGameResult(
@@ -69,16 +80,6 @@ function GameResult() {
   useEffect(() => {
     checkResult();
   }, [condition]);
-  useEffect(() => {
-    if (!state || !state.roomPW) {
-      console.error('게임방 패스워드가 존재하지 않습니다.');
-      navigate('/', { replace: true });
-    }
-  }, []);
-
-  if (!state || !state.roomPW) {
-    return <></>;
-  }
 
   return (
     <GameResultLayout>
