@@ -4,6 +4,7 @@ import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import Footer from '@components/common/footer';
 import { getGameRoomPassword } from '@apis/api/game';
+import { networkErrorAlert } from '@utils/customAlert';
 
 function Main_() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ function Main_() {
 
     if (roomPW.status !== 200) {
       // 패스워드가 제대로 전달되지 않았을 경우
-      alert('오류가 발생했습니다. 다시 시도해주세요.');
+      networkErrorAlert();
       return;
     }
     navigate('/room/wait', { state: { roomPW: roomPW.data.room_code } });
