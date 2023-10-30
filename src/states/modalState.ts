@@ -1,3 +1,5 @@
+import { recoilPersist } from 'recoil-persist';
+const { persistAtom } = recoilPersist();
 import { atom } from 'recoil';
 
 interface StockModalState {
@@ -38,4 +40,5 @@ export const stockModalVals = atom<StockModalVals>({
     info: undefined,
     difference: 0,
   },
+  effects_UNSTABLE: [persistAtom],
 });
