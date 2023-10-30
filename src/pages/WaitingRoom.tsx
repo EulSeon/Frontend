@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { keyframes, styled } from 'styled-components';
@@ -16,6 +15,7 @@ import {
 import { goNextRound, saveGameResult, updateRoomInfo } from '@apis/api/game';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 import { socket } from 'socket';
+import { defaultAlert, networkErrorAlert } from '@utils/customAlert';
 
 interface Students {
   user_id: number;
@@ -33,14 +33,19 @@ interface RoomSet {
   seed: number;
 }
 
+interface RoundProps {
+  currentRound: number;
+  totalRound: number;
+}
+
 function WaitingRoom() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const pwRef = useRef<any>(null);
+  const pwRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useRecoilState(systemVisible); // 팝업창 visible
   const [currentBtn, setCurrentBtn] = useRecoilState(currentBtnState); // 현재 선택된 버튼
-  const [students, setStudents] = useState<Students[] | []>([]); // 현재 접속한 학생들 목록
-  const [roomSetting] = useRecoilState(roomSet);
+  const [students, setStudents] = useState<Students[]>([]); // 현재 접속한 학생들 목록
+  const [roomSetting] = useRecoilState(roomSet); // 게임방 정보 세팅
   const [round, setRound] = useRecoilState(currentRound); // 현재 라운드
   const [timer, setTimer] = useState<{
     min: string | undefined;
@@ -54,7 +59,7 @@ function WaitingRoom() {
       !roomSetting.time_limit ||
       !roomSetting.seed
     ) {
-      alert('입력하지 않은 값이 있습니다.');
+      defaultAlert('입력하지 않은 값이 있습니다');
       return;
     }
     const result = await updateRoomInfo(state.roomPW, roomSetting as RoomSet);
@@ -65,7 +70,9 @@ function WaitingRoom() {
       socket.emit('game_start', state.roomPW); // 게임 시작 이벤트
       socket.emit('startTimer', state.roomPW); // 타이머 시작 이벤트
     } else if (result.status === 404) {
-      alert(result.data.error);
+      networkErrorAlert('게임방이 존재하지 않습니다');
+    } else if (result.status === 503) {
+      networkErrorAlert();
     }
   };
 
@@ -75,9 +82,8 @@ function WaitingRoom() {
     if (result.status === 200) {
       alert('라운드가 종료되었습니다.');
       return;
-    }
-    if (result.status === 500) {
-      alert('오류가 발생했습니다. 다시 시도해주세요');
+    } else if (result.status === 500) {
+      networkErrorAlert();
       return;
     }
     setCurrentBtn('game');
@@ -97,6 +103,7 @@ function WaitingRoom() {
       }
     });
     socket.on('timerStarted', () => {
+      // 타이머 시작
       socket.emit('get_round', state.roomPW); // 라운드 요청 이벤트
     });
     socket.on('timerTick', (remainingTime: number) => {
@@ -104,17 +111,10 @@ function WaitingRoom() {
       const { min, sec } = convertSecondsToMinute(remainingTime);
       setTimer({ min, sec });
     });
-
-    socket.on(
-      'notify_round',
-      ({ currentRound }: { currentRound: number; totalRound: number }) => {
-        // 현재 라운드 받아오기
-        setRound(currentRound);
-      }
-    );
-  }, []);
-
-  useEffect(() => {
+    socket.on('notify_round', ({ currentRound }: RoundProps) => {
+      // 현재 라운드 받아오기
+      setRound(currentRound);
+    });
     socket.on('timerEnded', (currentRound: number) => {
       // 타이머가 끝났을 경우
       setCurrentBtn('gameover');
@@ -124,21 +124,27 @@ function WaitingRoom() {
     return () => {
       socket.removeAllListeners('timerEnded');
     };
-  }, []); // round 바뀌는 것을 timerEnded 이벤트에 적용시키기 위해
+  }, []);
 
   // 게임 결과 저장하기
   const _saveGameResult = async (currentRound: number) => {
     const result = await saveGameResult(state.roomPW, {
       round_num: currentRound,
     });
-    // console.log(result);
+    if (result.status === 200) {
+      return;
+    } else {
+      networkErrorAlert();
+    }
   };
 
-  const onClickBlackBackground = (e: any) => {
+  const onClickBlackBackground = (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
     if (
       // 현재 클릭한 버튼이 패스워드일 경우에만, 바탕을 클릭했을 때 사라지도록 설정
       currentBtn === 'password' &&
-      (!pwRef.current || !pwRef.current.contains(e.target))
+      (!pwRef.current || !pwRef.current.contains(e.target as HTMLDivElement))
     ) {
       setVisible(false);
     }
