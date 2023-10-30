@@ -1,12 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { currentBtnState } from '../states/roomSetting';
+import {
+  currentBtnState,
+  currentRoomCode,
+  currentRound,
+  resultCondition,
+} from '../states/roomSetting';
 import { useRecoilState } from 'recoil';
 import { socket } from 'socket';
+import { checkGameResult, goNextRound } from '@apis/api/game';
 
 // 더미 데이터
 const data = [
@@ -31,16 +37,60 @@ const data = [
   },
 ];
 
+interface ListI {
+  rank: number;
+  name: string;
+  total_price: number;
+  total_roi: number;
+}
+
 const header = ['라운드', '순위', '이름', '총 자산', '수익률'];
 
 function GameResult() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const [_, setCurrentBtn] = useRecoilState(currentBtnState); // 현재 선택된 버튼
+  const [round, setRound] = useRecoilState(currentRound); // 현재 라운드
+  const [condition, setCondition] = useRecoilState(resultCondition); // 게임 결과 조회 조건
+  const [list, setList] = useState<ListI[]>([]); // 게임 결과 리스트
+
+  // 다음 라운드로 넘어가는 기능
+  const _goNextRound = async () => {
+    const result = await goNextRound(state.roomPW);
+    if (result.status === 200) {
+      alert('라운드가 종료되었습니다.');
+      return;
+    }
+    if (result.status === 500) {
+      alert('오류가 발생했습니다. 다시 시도해주세요');
+      return;
+    }
+    setCurrentBtn('game');
+    socket.emit('startTimer', state.roomPW); // 타이머 시작
+    navigate(-1); // 게임 대기방으로 다시 돌아감.
+  };
+
+  useEffect(() => {
+    setCondition({
+      round,
+      opt: 0,
+    });
+  }, []);
 
   useEffect(() => {
     socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
-  }, []);
+    checkResult();
+  }, [condition]);
+
+  const checkResult = async () => {
+    const result = await checkGameResult(
+      state.roomPW as string,
+      condition.round as number,
+      condition.opt as number
+    );
+
+    setList(result.data);
+  };
 
   return (
     <GameResultLayout>
@@ -57,22 +107,22 @@ function GameResult() {
             button2: {
               value: '다음 라운드',
               onClick: () => {
-                setCurrentBtn('game');
-                socket.emit('startTimer', state.roomPW); // 타이머 시작
-                navigate(-1); // 게임 대기방으로 다시 돌아감.
+                _goNextRound();
               },
             },
           }}
           result={{ data, header }}
         >
           <ListTitle>
-            <h3>0라운드 랭킹</h3>
+            <h3>{round}라운드 랭킹</h3>
             <div>
               <Select_
-                set={{ start: 5, count: 6, standard: 1 }}
+                title={{ value: '라운드별', visible: false }}
+                set={{ start: 1, count: round, standard: 1 }}
                 defaultValue="라운드별"
               />
               <Select_
+                title={{ value: '구분', visible: false }}
                 set={{ start: 5, count: 2, standard: 1 }}
                 defaultValue="구분"
               />
@@ -91,15 +141,15 @@ function GameResult() {
                 <col />
               </colgroup>
               <tbody>
-                {new Array(19).fill(0).map((_, index) => {
+                {list.map((student, index) => {
                   return (
                     <tr key={index}>
                       <td>
                         <Profile src="/images/defaultProfile.svg" />
-                        <p>황을선선선</p>
+                        <p>{student.name}</p>
                       </td>
-                      <td>13,293,957</td>
-                      <td>157%</td>
+                      <td>{student.total_price}</td>
+                      <td>{student.total_roi}%</td>
                     </tr>
                   );
                 })}
