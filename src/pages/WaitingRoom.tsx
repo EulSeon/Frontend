@@ -62,6 +62,10 @@ function WaitingRoom() {
       defaultAlert('입력하지 않은 값이 있습니다');
       return;
     }
+    if (students.length < 2) {
+      defaultAlert('인원이 부족합니다');
+      return;
+    }
     const result = await updateRoomInfo(state.roomPW, roomSetting as RoomSet);
     if (result.status === 200) {
       // 방 정보가 성공적으로 업데이트 됐을 경우
@@ -123,6 +127,7 @@ function WaitingRoom() {
 
     return () => {
       socket.removeAllListeners('timerEnded');
+      socket.emit('stopTimer', state.roomPW); // 타이머를 멈추는 이벤트
     };
   }, []);
 
