@@ -3,16 +3,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { styled } from 'styled-components';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 import { useRecoilState } from 'recoil';
-import { roomSet } from '../states/roomSetting';
+import { roomSet, resultCondition } from '../states/roomSetting';
 
 interface SelectProps {
-  title?: string;
+  title: { value: string; visible: boolean }; // 타이틀값, 타이틀 보여지는 여부
   set: {
     start: number;
     count: number;
     standard: number;
   };
   defaultValue: string;
+  // default?: number | string;
 }
 
 function Select_({
@@ -27,8 +28,9 @@ function Select_({
   ); // 선택된 option
   const [currentSelectedVal, setCurrentSelectedVal] = useState<
     number | undefined
-  >(undefined); // 선택된 option의 실제로 사용될 값
+  >(); // 선택된 option의 실제로 사용될 값
   const [roomSetting, setRoom] = useRecoilState(roomSet);
+  const [, setCondition] = useRecoilState(resultCondition); // 게임 결과 조회 조건
 
   useEffect(() => {
     // 이미 값이 저장되어있는 경우에는 값이 초기화될 수도 있기 때문에 return
@@ -36,7 +38,7 @@ function Select_({
     if (roomSetting.time_limit && currentSelectedVal === undefined) return;
     if (roomSetting.seed && currentSelectedVal === undefined) return;
 
-    switch (title) {
+    switch (title.value) {
       case '라운드':
         setRoom((pre) => ({
           ...pre,
@@ -53,6 +55,18 @@ function Select_({
         setRoom((pre) => ({
           ...pre,
           seed: currentSelectedVal,
+        }));
+        break;
+      case '라운드별':
+        setCondition((pre) => ({
+          ...pre,
+          round: currentSelectedVal,
+        }));
+        break;
+      case '구분':
+        setCondition((pre) => ({
+          ...pre,
+          opt: currentSelectedVal,
         }));
         break;
       default:
@@ -83,9 +97,12 @@ function Select_({
   ) => {
     const { innerText } = e.target as HTMLLIElement;
     setSelected(innerText);
-    if (title === '시드머니') {
+    if (title.value === '시드머니') {
       setCurrentSelectedVal(value * 10000);
     } else {
+      setCurrentSelectedVal(value);
+    }
+    if (title.value === '구분') {
       setCurrentSelectedVal(value);
     }
     setSelectedVisible(false);
@@ -93,7 +110,7 @@ function Select_({
 
   return (
     <SelectLayout ref={selectRef}>
-      <Title $visible={title ? true : false}>{title}</Title>
+      <Title $visible={title.visible}>{title.value}</Title>
       <Select>
         <SelectBtn
           onClick={() => {
@@ -113,14 +130,14 @@ function Select_({
                   const value = start + standard * index;
                   let minute = '0';
                   let seconds = '0';
-                  if (title === '제한시간') {
+                  if (title.value === '제한시간') {
                     const { min, sec } = convertSecondsToMinute(value);
                     minute = min;
                     seconds = sec;
                   }
                   return (
                     <>
-                      {title === '제한시간' ? (
+                      {title.value === '제한시간' ? (
                         <li
                           key={index}
                           onClick={(e: any) => {
@@ -142,12 +159,12 @@ function Select_({
                     </>
                   );
                 })
-              : ['자산별', '수익별'].map((item) => {
+              : ['자산별', '수익별'].map((item, index) => {
                   return (
                     <li
                       key={item}
                       onClick={(e: any) => {
-                        onClickSelectValue(e, 0);
+                        onClickSelectValue(e, index);
                       }}
                     >
                       {item}

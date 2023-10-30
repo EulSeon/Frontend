@@ -39,3 +39,25 @@ export const currentRoomCode = atom<string | undefined>({
   default: undefined,
   effects_UNSTABLE: [persistAtom],
 });
+
+// 게임 라운드
+export const currentRound = atom<number>({
+  key: 'round',
+  default: 1,
+  effects_UNSTABLE: [persistAtom],
+});
+
+interface ResultCondition {
+  round: number | undefined;
+  opt: number | undefined;
+}
+
+// 게임 결과 조회 조건
+export const resultCondition = atom<ResultCondition>({
+  key: 'resultCondition',
+  default: {
+    round: 1,
+    opt: 0,
+  },
+  effects_UNSTABLE: [persistAtom],
+});
