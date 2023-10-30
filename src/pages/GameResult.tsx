@@ -130,36 +130,37 @@ function GameResult() {
                 <col />
               </colgroup>
               <tbody>
-                {list.map((student, index) => {
-                  return (
-                    <tr key={index}>
-                      <td>
-                        {student.profile_num === 0 ? (
-                          <Profile src="/images/defaultProfile-blue1.svg" />
-                        ) : null}
-                        {student.profile_num === 1 ? (
-                          <Profile src="/images/defaultProfile-blue2.svg" />
-                        ) : null}
-                        {student.profile_num === 2 ? (
-                          <Profile src="/images/defaultProfile-blue3.svg" />
-                        ) : null}
-                        <p>{student.name}</p>
-                      </td>
-                      <td>{student.total_price.toLocaleString('ko-KR')}</td>
-                      <Roi
-                        color={
-                          student.total_roi > 0
-                            ? 'red'
-                            : student.total_roi === 0
-                            ? 'black'
-                            : 'blue'
-                        }
-                      >
-                        {student.total_roi}%
-                      </Roi>
-                    </tr>
-                  );
-                })}
+                {list &&
+                  list.map((student, index) => {
+                    return (
+                      <tr key={index}>
+                        <td>
+                          {student.profile_num === 0 ? (
+                            <Profile src="/images/defaultProfile-blue1.svg" />
+                          ) : null}
+                          {student.profile_num === 1 ? (
+                            <Profile src="/images/defaultProfile-blue2.svg" />
+                          ) : null}
+                          {student.profile_num === 2 ? (
+                            <Profile src="/images/defaultProfile-blue3.svg" />
+                          ) : null}
+                          <p>{student.name}</p>
+                        </td>
+                        <td>{student.total_price.toLocaleString('ko-KR')}</td>
+                        <Roi
+                          color={
+                            student.total_roi > 0
+                              ? 'red'
+                              : student.total_roi === 0
+                              ? 'black'
+                              : 'blue'
+                          }
+                        >
+                          {student.total_roi}%
+                        </Roi>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </ResultContent>
