@@ -6,55 +6,43 @@ import Select_ from '@components/select';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   currentBtnState,
-  currentRoomCode,
   currentRound,
   resultCondition,
 } from '../states/roomSetting';
 import { useRecoilState } from 'recoil';
 import { socket } from 'socket';
 import { checkGameResult, goNextRound } from '@apis/api/game';
+import { networkErrorAlert } from '@utils/customAlert';
 
-// 더미 데이터
-const data = [
-  {
-    round: 1,
-    rank: 1,
-    name: '20220631황을선',
-    totalAssets: 13293957,
-    roi: 157,
-  },
-  {
-    rank: 2,
-    name: '20220631황을선',
-    totalAssets: 13293957,
-    roi: 157,
-  },
-  {
-    rank: 3,
-    name: '20220631황을선',
-    totalAssets: 13293957,
-    roi: 157,
-  },
-];
-
-interface ListI {
+interface GameResultList {
   rank: number;
+  profile_num: number;
   name: string;
   total_price: number;
   total_roi: number;
 }
 
-const header = ['라운드', '순위', '이름', '총 자산', '수익률'];
+const header = ['순위', '프로필', '이름', '총 자산', '수익률'];
 
 function GameResult() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const [_, setCurrentBtn] = useRecoilState(currentBtnState); // 현재 선택된 버튼
-  const [round, setRound] = useRecoilState(currentRound); // 현재 라운드
+  const [list, setList] = useState<GameResultList[]>([]); // 게임 결과 리스트
+  const [, setCurrentBtn] = useRecoilState(currentBtnState); // 현재 선택된 버튼
+  const [round] = useRecoilState(currentRound); // 현재 라운드
   const [condition, setCondition] = useRecoilState(resultCondition); // 게임 결과 조회 조건
-  const [list, setList] = useState<ListI[]>([]); // 게임 결과 리스트
 
-  // 다음 라운드로 넘어가는 기능
+  // 게임 결과 조회하기
+  const checkResult = async () => {
+    const result = await checkGameResult(
+      state.roomPW as string,
+      condition.round as number,
+      condition.opt as number
+    );
+    setList(result.data);
+  };
+
+  // 다음 라운드로 넘어가기
   const _goNextRound = async () => {
     const result = await goNextRound(state.roomPW);
     if (result.status === 200) {
@@ -62,7 +50,7 @@ function GameResult() {
       return;
     }
     if (result.status === 500) {
-      alert('오류가 발생했습니다. 다시 시도해주세요');
+      networkErrorAlert();
       return;
     }
     setCurrentBtn('game');
@@ -71,26 +59,26 @@ function GameResult() {
   };
 
   useEffect(() => {
+    socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
+    // 결과조회 초기값은 round는 현재 라운드, 구분은 자산별로 설정
     setCondition({
       round,
       opt: 0,
     });
   }, []);
-
   useEffect(() => {
-    socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
     checkResult();
   }, [condition]);
+  useEffect(() => {
+    if (!state || !state.roomPW) {
+      console.error('게임방 패스워드가 존재하지 않습니다.');
+      navigate('/', { replace: true });
+    }
+  }, []);
 
-  const checkResult = async () => {
-    const result = await checkGameResult(
-      state.roomPW as string,
-      condition.round as number,
-      condition.opt as number
-    );
-
-    setList(result.data);
-  };
+  if (!state || !state.roomPW) {
+    return <></>;
+  }
 
   return (
     <GameResultLayout>
@@ -111,7 +99,7 @@ function GameResult() {
               },
             },
           }}
-          result={{ data, header }}
+          result={{ list, header }}
         >
           <ListTitle>
             <h3>{round}라운드 랭킹</h3>
@@ -145,7 +133,15 @@ function GameResult() {
                   return (
                     <tr key={index}>
                       <td>
-                        <Profile src="/images/defaultProfile.svg" />
+                        {student.profile_num === 0 ? (
+                          <Profile src="/images/defaultProfile-blue1.svg" />
+                        ) : null}
+                        {student.profile_num === 1 ? (
+                          <Profile src="/images/defaultProfile-blue2.svg" />
+                        ) : null}
+                        {student.profile_num === 2 ? (
+                          <Profile src="/images/defaultProfile-blue3.svg" />
+                        ) : null}
                         <p>{student.name}</p>
                       </td>
                       <td>{student.total_price.toLocaleString('ko-KR')}</td>

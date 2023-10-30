@@ -177,7 +177,7 @@ function WaitingRoom() {
             <OptionBox>
               <button
                 onClick={() => {
-                  navigate('/room/1/result', {
+                  navigate('/room/result', {
                     state: { roomPW: state.roomPW },
                   });
                 }}

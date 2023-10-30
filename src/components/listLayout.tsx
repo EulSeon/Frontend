@@ -44,7 +44,7 @@ function ListLayout_({
             {buttonInfo.button1.value === '결과 저장하기' ? (
               <TwoButton onClick={buttonInfo.button1.onClick}>
                 <CsvDownloadButton
-                  data={rest.result.data}
+                  data={rest.result.list}
                   filename="게임 결과.csv"
                   delimiter=","
                   headers={rest.result.header}

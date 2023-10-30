@@ -29,7 +29,7 @@ function App() {
           <Route path="/about" element={<About />}></Route>
           <Route path="/contact" element={<Contact />}></Route>
           <Route path="/room/wait" element={<WaitingRoomLayout />}></Route>
-          <Route path="/room/1/result" element={<GameResult />}></Route>
+          <Route path="/room/result" element={<GameResult />}></Route>
 
           {/* 학생들 */}
           <Route path="/student" element={<StudentMain />}></Route>
