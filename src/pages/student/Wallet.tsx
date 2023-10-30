@@ -11,7 +11,7 @@ import { useRecoilState } from 'recoil';
 import { navbarState } from '@states/navbarState';
 import { stockModalState, stockModalVals } from '@states/modalState';
 import { finishBackgroundState } from '@states/backgroundState';
-import { currentRoomCode } from '@states/roomSetting';
+import { currentRoomCode, currentRound } from '@states/roomSetting';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 import { socket } from 'socket';
 
@@ -21,6 +21,7 @@ function Game() {
   const [modalState, setModalState] = useRecoilState(stockModalState); // 모달 visible 상태
   const [modalVals] = useRecoilState(stockModalVals); // 모달에 들어가는 값
   const [finish, setFinish] = useRecoilState(finishBackgroundState); // 라운드 종료 여부
+  const [round, setRound] = useRecoilState(currentRound); // 현재 라운드
   const popupRef = useRef<any>(null);
   const [timer, setTimer] = useState<{
     min: string | undefined;
@@ -48,6 +49,10 @@ function Game() {
         ...pre,
         visible: false,
       }));
+    });
+    socket.on('notify_round', (round: number) => {
+      // 현재 라운드 받아오기
+      setRound(round);
     });
   }, []);
 
@@ -80,7 +85,7 @@ function Game() {
       <FinishBackground $visible={finish}>
         <div>
           <img src="/icons/loading_icon.png" />
-          <p>N / N라운드</p>
+          <p>{round}라운드 종료</p>
         </div>
       </FinishBackground>
       <BlackBackground
@@ -95,7 +100,7 @@ function Game() {
           {selectedNav === 'news' ? <News /> : null}
         </ContentSection>
         <Round>
-          <p>N / 10 라운드</p>
+          <p>{round} / 5 라운드</p>
           <p>
             {timer.min !== undefined && timer.sec !== undefined
               ? timer.min + ':' + timer.sec
