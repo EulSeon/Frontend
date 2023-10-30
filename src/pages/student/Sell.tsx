@@ -3,34 +3,54 @@ import React, { useEffect, useState } from 'react';
 import { css, keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
 import { useRecoilState } from 'recoil';
-import { stockModalState } from '@states/modalState';
-import { io } from 'socket.io-client';
+import { stockModalState, stockModalVals } from '@states/modalState';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 import { useNavigate } from 'react-router-dom';
-
-const socket = io('http://localhost:8000');
+import { socket } from 'socket';
+import { getUserInfo, _sellStock } from '@apis/api/wallet';
+import { useQuery } from 'react-query';
+import { currentRoomCode } from '@states/roomSetting';
 
 function Sell() {
   const navigate = useNavigate();
-  const holdingStock = 10; // 현재 내가 보유하고 있는 주식(임시로 설정)
   const [sellStock, setSellStock] = useState<string>(''); // 판매할 주식 수
   const [_, setModalState] = useRecoilState(stockModalState);
-  const [stockPrice, setStockPrice] = useState(31009); // 현재 1주당 가격
+  const [modalVals] = useRecoilState(stockModalVals); // 모달에 있는 값들
   const [notice, setNotice] = useState<{
     available: boolean | undefined;
     content: string;
   }>({ available: true, content: '' }); // 안내 문구
-  const [totalAsset, setTotalAsset] = useState(800000); // 가용자산
+  const [roomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
+  const getUserInformation = async () => {
+    const info = await getUserInfo(roomCode as string);
+    return info.data;
+  };
+
+  const {
+    data: {
+      user_info: { using_asset },
+    },
+  } = useQuery('userInfo', getUserInformation);
+
   const [timer, setTimer] = useState<{
     min: string | undefined;
     sec: string | undefined;
   }>({ min: undefined, sec: undefined }); // 타이머 시간
 
-  useEffect(() => {
-    socket.on('connect', () => {
-      console.log('connection server');
+  const sell = async () => {
+    const result = await _sellStock(modalVals.id as number, {
+      sell_num: Number(sellStock),
+      pwd: roomCode as string,
     });
-    socket.emit('room_connect', 'kkLBlX'); // 방 접속 이벤트 : 임시 패스워드 값 넣어둠.
+    if (result.status !== 200) {
+      alert('주식 매수에 실패했습니다.');
+      return;
+    }
+    navigate(-1);
+  };
+
+  useEffect(() => {
+    socket.emit('room_connect', roomCode); // 방 접속 이벤트 : 임시 패스워드 값 넣어둠.
     socket.on('timerTick', (info: any) => {
       // 타이머 시간 가는 중 ...
       const { min, sec } = convertSecondsToMinute(info);
@@ -44,11 +64,16 @@ function Sell() {
   useEffect(() => {
     if (sellStock.length === 0) {
       // 몇 주를 팔지 입력하지 않은 경우
-      setNotice({ available: undefined, content: `${holdingStock}주 보유중` });
+      setNotice({
+        available: undefined,
+        content: `${
+          modalVals.inStock === undefined ? 0 : modalVals.inStock
+        }주 보유중`,
+      });
     } else {
-      const getAsset = Number(sellStock) * stockPrice; // 벌 수 있는 금액
+      const getAsset = Number(sellStock) * modalVals.second_menu_price; // 벌 수 있는 금액
 
-      if (Number(sellStock) <= holdingStock) {
+      if (modalVals.inStock && Number(sellStock) <= modalVals.inStock) {
         // 내가 해당 개수만큼 주식을 보유하고 있는 경우
         setNotice({
           available: true,
@@ -78,7 +103,7 @@ function Sell() {
       <StudentHeader />
       <Main>
         <PriceBox>
-          <p>{stockPrice.toLocaleString('ko-KR')}</p>
+          <p>{modalVals.second_menu_price.toLocaleString('ko-KR')}</p>
           <p>현재 1주당 가격</p>
         </PriceBox>
         <BuyStock $value={sellStock} $available={notice.available}>
@@ -90,9 +115,10 @@ function Sell() {
         </BuyStock>
         <AvailableAssets>
           <p>
-            {(totalAsset + Number(sellStock) * stockPrice).toLocaleString(
-              'ko-KR'
-            )}
+            {(
+              using_asset +
+              Number(sellStock) * modalVals.second_menu_price
+            ).toLocaleString('ko-KR')}
             원
           </p>
           <p>가용자산</p>
@@ -160,7 +186,17 @@ function Sell() {
           </Line>
         </KeyPad>
         <Button>
-          <button>매도하기</button>
+          <button
+            onClick={() => {
+              if (!notice.available) {
+                // 잔액이 부족한 상태
+                return;
+              }
+              sell();
+            }}
+          >
+            매도하기
+          </button>
         </Button>
         <RoundBox>
           <Round>
@@ -179,6 +215,7 @@ function Sell() {
 }
 
 const SellLayout = styled.div`
+  min-height: 100vh;
   background-color: #ececec;
 `;
 

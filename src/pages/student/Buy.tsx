@@ -6,21 +6,20 @@ import { useRecoilState } from 'recoil';
 import { stockModalState, stockModalVals } from '@states/modalState';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 import { useNavigate } from 'react-router-dom';
-import { purchaseStock } from '@apis/api/wallet';
+import { getUserInfo, purchaseStock } from '@apis/api/wallet';
 import { currentRoomCode } from '@states/roomSetting';
 import { socket } from 'socket';
+import { useQuery } from 'react-query';
 
 function Buy() {
   const navigate = useNavigate();
-  const [buyStock, setBuyStock] = useState<string>(''); // 구매할 주
-  const [_, setModalState] = useRecoilState(stockModalState);
+  const [buyStock, setBuyStock] = useState<string>(''); // 구매할 주식 수
+  const [, setModalState] = useRecoilState(stockModalState);
   const [modalVals] = useRecoilState(stockModalVals); // 모달에 있는 값들
-  const [stockPrice, setStockPrice] = useState(31009); // 현재 1주당 가격
   const [notice, setNotice] = useState<{
     available: boolean | undefined;
     content: string;
   }>({ available: true, content: '' }); // 안내 문구
-  const [totalAsset, setTotalAsset] = useState(800000); // 가용자산
   const [usingAsset, setUsingAsset] = useState<number>(0); // 사용할 금액
   const [timer, setTimer] = useState<{
     min: string | undefined;
@@ -28,17 +27,37 @@ function Buy() {
   }>({ min: undefined, sec: undefined }); // 타이머 시간
   const [roomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
 
+  useEffect(() => {
+    getUserInformation();
+  }, []);
+
+  const getUserInformation = async () => {
+    const info = await getUserInfo(roomCode as string);
+    return info.data;
+  };
+
+  const {
+    data: {
+      stock_list,
+      user_info: { using_asset },
+    },
+  } = useQuery('userInfo', getUserInformation);
+
   const purchase = async () => {
     const result = await purchaseStock(modalVals.id as number, {
       purchase_num: Number(buyStock),
       round_num: 1,
       pwd: roomCode as string,
     });
-    console.log(result);
+    if (result.status !== 200) {
+      alert('주식 매수에 실패했습니다.');
+      return;
+    }
+    navigate(-1);
   };
 
   useEffect(() => {
-    socket.emit('room_connect', 'kkLBlX'); // 방 접속 이벤트 : 임시 패스워드 값 넣어둠.
+    socket.emit('room_connect', roomCode);
     socket.on('timerTick', (info: any) => {
       // 타이머 시간 가는 중 ...
       const { min, sec } = convertSecondsToMinute(info);
@@ -52,13 +71,20 @@ function Buy() {
   useEffect(() => {
     if (buyStock.length === 0) {
       // 몇 주를 살지 입력하지 않은 경우
-      setNotice({ available: undefined, content: `3주 보유중` });
+      setNotice({
+        available: undefined,
+        content: `${
+          stock_list[modalVals.id as number] === undefined
+            ? 0
+            : stock_list[modalVals.id as number].count
+        }주 보유중`,
+      });
       setUsingAsset(0);
     } else {
       // 몇 주를 살지 입력한 경우 남은 가용자산 계산
-      const useAsset = Number(buyStock) * stockPrice; // 사용할 금액
+      const useAsset = Number(buyStock) * modalVals.second_menu_price; // 사용할 금액
 
-      if (totalAsset >= useAsset) {
+      if (using_asset && using_asset >= useAsset) {
         // 가용자산이 충분한 경우
         setNotice({
           available: true,
@@ -89,7 +115,7 @@ function Buy() {
       <StudentHeader />
       <Main>
         <PriceBox>
-          <p>{stockPrice.toLocaleString('ko-KR')}</p>
+          <p>{modalVals.second_menu_price.toLocaleString('ko-KR')}</p>
           <p>현재 1주당 가격</p>
         </PriceBox>
         <BuyStock $value={buyStock} $available={notice.available}>
@@ -100,7 +126,10 @@ function Buy() {
           <p>{notice.content}</p>
         </BuyStock>
         <AvailableAssets>
-          <p>{(totalAsset - usingAsset).toLocaleString('ko-KR')}원</p>
+          <p>
+            {(using_asset && using_asset - usingAsset).toLocaleString('ko-KR')}
+            원
+          </p>
           <p>가용자산</p>
         </AvailableAssets>
         <KeyPad>
@@ -168,9 +197,11 @@ function Buy() {
         <Button>
           <button
             onClick={() => {
+              if (!notice.available) {
+                // 잔액이 부족한 상태
+                return;
+              }
               purchase();
-              alert('매수 완료');
-              navigate(-1);
             }}
           >
             매수하기
@@ -193,6 +224,7 @@ function Buy() {
 }
 
 const BuyLayout = styled.div`
+  min-height: 100vh;
   background-color: #ececec;
 `;
 
