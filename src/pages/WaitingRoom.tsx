@@ -105,10 +105,13 @@ function WaitingRoom() {
       setTimer({ min, sec });
     });
 
-    socket.on('notify_round', (round: number) => {
-      // 현재 라운드 받아오기
-      setRound(round);
-    });
+    socket.on(
+      'notify_round',
+      ({ currentRound }: { currentRound: number; totalRound: number }) => {
+        // 현재 라운드 받아오기
+        setRound(currentRound);
+      }
+    );
   }, []);
 
   useEffect(() => {

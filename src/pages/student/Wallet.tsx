@@ -11,7 +11,7 @@ import { useRecoilState } from 'recoil';
 import { navbarState } from '@states/navbarState';
 import { stockModalState, stockModalVals } from '@states/modalState';
 import { finishBackgroundState } from '@states/backgroundState';
-import { currentRoomCode, currentRound } from '@states/roomSetting';
+import { roomSet, currentRoomCode, currentRound } from '@states/roomSetting';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 import { socket } from 'socket';
 
@@ -28,6 +28,7 @@ function Game() {
     sec: string | undefined;
   }>({ min: undefined, sec: undefined }); // 타이머 시간
   const [roomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
+  const [roomSetting, setRoomSetting] = useRecoilState(roomSet);
 
   useEffect(() => {
     socket.emit('room_connect', roomCode); // 방 접속 이벤트
@@ -50,10 +51,23 @@ function Game() {
         visible: false,
       }));
     });
-    socket.on('notify_round', (round: number) => {
-      // 현재 라운드 받아오기
-      setRound(round);
-    });
+    socket.on(
+      'notify_round',
+      ({
+        currentRound,
+        totalRound,
+      }: {
+        currentRound: number;
+        totalRound: number;
+      }) => {
+        // 현재 라운드 받아오기
+        setRound(currentRound);
+        setRoomSetting((pre) => ({
+          ...pre,
+          round_num: totalRound,
+        }));
+      }
+    );
   }, []);
 
   const onClickBlackBackground = (e: any) => {
@@ -100,7 +114,9 @@ function Game() {
           {selectedNav === 'news' ? <News /> : null}
         </ContentSection>
         <Round>
-          <p>{round} / 5 라운드</p>
+          <p>
+            {round} / {roomSetting.round_num} 라운드
+          </p>
           <p>
             {timer.min !== undefined && timer.sec !== undefined
               ? timer.min + ':' + timer.sec
