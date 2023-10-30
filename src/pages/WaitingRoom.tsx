@@ -52,6 +52,17 @@ function WaitingRoom() {
     sec: string | undefined;
   }>({ min: undefined, sec: undefined }); // 타이머 시간
 
+  useEffect(() => {
+    if (!state || !state.roomPW) {
+      console.error('게임방 패스워드가 존재하지 않습니다.');
+      navigate('/', { replace: true });
+    }
+  }, []);
+
+  if (!state || !state.roomPW) {
+    return <></>;
+  }
+
   // 게임방 정보 업데이트
   const updateRoomInformation = async () => {
     if (
