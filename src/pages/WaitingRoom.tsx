@@ -5,7 +5,7 @@ import Header_ from '@components/common/header';
 import ListLayout_ from '@components/listLayout';
 import Select_ from '@components/select';
 import { useNavigate } from 'react-router-dom';
-import { useRecoilState } from 'recoil';
+import { useRecoilState, useResetRecoilState } from 'recoil';
 import {
   roomSet,
   currentBtnState,
@@ -16,6 +16,8 @@ import { goNextRound, saveGameResult, updateRoomInfo } from '@apis/api/game';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 import { socket } from 'socket';
 import { defaultAlert, networkErrorAlert } from '@utils/customAlert';
+import Swal from 'sweetalert2';
+import 'animate.css';
 
 interface Students {
   user_id: number;
@@ -51,6 +53,7 @@ function WaitingRoom() {
     min: string | undefined;
     sec: string | undefined;
   }>({ min: undefined, sec: undefined }); // 타이머 시간
+  const resetSystemVisible = useResetRecoilState(systemVisible);
 
   useEffect(() => {
     if (!state || !state.roomPW) {
@@ -95,7 +98,31 @@ function WaitingRoom() {
   const _goNextRound = async () => {
     const result = await goNextRound(state.roomPW);
     if (result.status === 200) {
-      alert('라운드가 종료되었습니다.');
+      resetSystemVisible();
+      Swal.fire({
+        position: 'center',
+        title: `게임이 종료되었습니다.`,
+        text: '게임 결과창으로 이동합니다.',
+        imageUrl: '/images/errorImage.png',
+        imageWidth: 200,
+        imageHeight: 200,
+        showConfirmButton: false,
+        timer: 2300,
+        width: 600,
+        padding: '4em 0rem 4em',
+        showClass: {
+          popup: 'animate__animated animate__fadeInDown',
+        },
+        hideClass: {
+          popup: 'animate__animated animate__fadeOutUp',
+        },
+      });
+      setTimeout(async () => {
+        navigate('/room/result', {
+          state: { roomPW: state.roomPW },
+          replace: true,
+        });
+      }, 2300);
       return;
     } else if (result.status === 500) {
       networkErrorAlert();

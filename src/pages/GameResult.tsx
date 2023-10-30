@@ -13,6 +13,7 @@ import { useRecoilState } from 'recoil';
 import { socket } from 'socket';
 import { checkGameResult, goNextRound } from '@apis/api/game';
 import { networkErrorAlert } from '@utils/customAlert';
+import Swal from 'sweetalert2';
 
 interface GameResultList {
   rank: number;
@@ -57,7 +58,28 @@ function GameResult() {
   const _goNextRound = async () => {
     const result = await goNextRound(state.roomPW);
     if (result.status === 200) {
-      alert('라운드가 종료되었습니다.');
+      Swal.fire({
+        title: '게임이 종료되었습니다.',
+        text: '정말로 나가시겠습니까? 게임 결과창을 다시 볼 수 없습니다.',
+        width: 600,
+        imageWidth: 200,
+        imageHeight: 200,
+        imageUrl: '/images/errorImage.png',
+        showCancelButton: true,
+        confirmButtonColor: '#A7C2E4',
+        cancelButtonColor: '#ec7272',
+        confirmButtonText: 'OK',
+        cancelButtonText: '취소',
+        padding: '4em 0rem 4em',
+        showClass: {
+          popup: 'animate__animated animate__fadeInDown',
+        },
+      }).then((result) => {
+        socket.emit('gameEnded', state.roomPW);
+        if (result.isConfirmed) {
+          navigate('/', { replace: true });
+        }
+      });
       return;
     }
     if (result.status === 500) {

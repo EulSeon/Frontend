@@ -51,6 +51,9 @@ function Game() {
         visible: false,
       }));
     });
+    socket.on('gameEnded', () => {
+      navigate('/student', { replace: true });
+    });
     socket.on(
       'notify_round',
       ({
