@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { styled } from 'styled-components';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
@@ -13,7 +12,6 @@ interface SelectProps {
     standard: number;
   };
   defaultValue: string;
-  // default?: number | string;
 }
 
 function Select_({
@@ -140,7 +138,9 @@ function Select_({
                       {title.value === '제한시간' ? (
                         <li
                           key={index}
-                          onClick={(e: any) => {
+                          onClick={(
+                            e: React.MouseEvent<HTMLLIElement, MouseEvent>
+                          ) => {
                             onClickSelectValue(e, value);
                           }}
                         >
@@ -149,7 +149,9 @@ function Select_({
                       ) : (
                         <li
                           key={index}
-                          onClick={(e: any) => {
+                          onClick={(
+                            e: React.MouseEvent<HTMLLIElement, MouseEvent>
+                          ) => {
                             onClickSelectValue(e, value);
                           }}
                         >
@@ -163,7 +165,9 @@ function Select_({
                   return (
                     <li
                       key={item}
-                      onClick={(e: any) => {
+                      onClick={(
+                        e: React.MouseEvent<HTMLLIElement, MouseEvent>
+                      ) => {
                         onClickSelectValue(e, index);
                       }}
                     >
