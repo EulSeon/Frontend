@@ -148,8 +148,18 @@ function GameResult() {
                         <Profile src="/images/defaultProfile.svg" />
                         <p>{student.name}</p>
                       </td>
-                      <td>{student.total_price}</td>
-                      <td>{student.total_roi}%</td>
+                      <td>{student.total_price.toLocaleString('ko-KR')}</td>
+                      <Roi
+                        color={
+                          student.total_roi > 0
+                            ? 'red'
+                            : student.total_roi === 0
+                            ? 'black'
+                            : 'blue'
+                        }
+                      >
+                        {student.total_roi}%
+                      </Roi>
                     </tr>
                   );
                 })}
@@ -269,8 +279,7 @@ const ResultHeader = styled.div`
 const ResultContent = styled.div`
   border-radius: 25px;
   background: rgba(255, 255, 255, 0.4);
-  height: 100%;
-  max-height: 520px;
+  height: 520px;
   padding: 0 50px;
   overflow-y: auto;
   -ms-overflow-style: none;
@@ -299,7 +308,7 @@ const ResultContent = styled.div`
         & > td:nth-child(1) {
           display: flex;
           align-items: center;
-          justify-content: left;
+          justify-content: flex-start;
           color: #000000;
           font-size: 2rem;
           font-style: normal;
@@ -321,7 +330,6 @@ const ResultContent = styled.div`
         }
 
         & > td:nth-child(3) {
-          color: #ff0000;
           text-align: right;
           font-size: 2rem;
           font-style: normal;
@@ -334,7 +342,6 @@ const ResultContent = styled.div`
 
   @media screen and (max-width: 768px) {
     padding: 0 30px;
-    max-height: 400px;
 
     & > table {
       & > tbody {
@@ -342,7 +349,6 @@ const ResultContent = styled.div`
           & > td:nth-child(1) {
             font-size: 3vw;
             gap: 15px;
-            justify-content: center;
           }
 
           & > td:nth-child(2) {
@@ -371,6 +377,10 @@ const Profile = styled.img`
   @media screen and (max-width: 390px) {
     display: none;
   }
+`;
+
+const Roi = styled.td<{ color: string }>`
+  color: ${(props) => props.color};
 `;
 
 export default GameResult;
