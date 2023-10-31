@@ -11,6 +11,7 @@ import {
   currentBtnState,
   systemVisible,
   currentRound,
+  currentRoomCode,
 } from '../states/roomSetting';
 import { goNextRound, saveGameResult, updateRoomInfo } from '@apis/api/game';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
@@ -54,6 +55,7 @@ function WaitingRoom() {
     sec: string | undefined;
   }>({ min: undefined, sec: undefined }); // 타이머 시간
   const resetSystemVisible = useResetRecoilState(systemVisible);
+  const [, setRoomCode] = useRecoilState(currentRoomCode); // 방코드
 
   useEffect(() => {
     if (!state || !state.roomPW) {
@@ -192,6 +194,12 @@ function WaitingRoom() {
       setVisible(false);
     }
   };
+
+  useEffect(() => {
+    if (state && state.roomPW) {
+      setRoomCode(state.roomPW);
+    }
+  }, [state]);
 
   return (
     <WaitingRoomLayout>

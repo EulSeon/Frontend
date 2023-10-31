@@ -48,6 +48,25 @@ export const updateRoomInfo = async (roomPW: string, roomInfo: RoomInfo) => {
   }
 };
 
+// 게임방 제거하기
+export const deleteGameRoom = async (roomPW: string) => {
+  try {
+    const { data, status } = await defaultInstance.delete(`/rooms/${roomPW}`);
+    return { data, status };
+  } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 503,
+        error: '네트워크 에러발생',
+      };
+    }
+    return {
+      status: e.response.status,
+      error: e.response.data.error,
+    };
+  }
+};
+
 interface StudentInfo {
   name: string; // 이름
   profile_num: number; // 프로필

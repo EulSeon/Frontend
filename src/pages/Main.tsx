@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 import Header_ from '@components/common/header';
 import Footer from '@components/common/footer';
-import { getGameRoomPassword } from '@apis/api/game';
+import { deleteGameRoom, getGameRoomPassword } from '@apis/api/game';
 import { networkErrorAlert } from '@utils/customAlert';
 import {
   currentBtnState,
@@ -11,8 +11,9 @@ import {
   resultCondition,
   roomSet,
   systemVisible,
+  currentRoomCode,
 } from '@states/roomSetting';
-import { useResetRecoilState } from 'recoil';
+import { useRecoilState, useResetRecoilState } from 'recoil';
 
 function Main_() {
   const navigate = useNavigate();
@@ -21,7 +22,9 @@ function Main_() {
   const resetRoomSet = useResetRecoilState(roomSet);
   const resetSystemVisible = useResetRecoilState(systemVisible);
   const resetcurrentRound = useResetRecoilState(currentRound);
+  const [roomCode] = useRecoilState(currentRoomCode); // 방코드
 
+  // 게임방 생성
   const onClickCreateRoomBtn = async () => {
     // 게임방 비밀번호 요청
     // 비밀번호를 성공적으로 받으면 게임 대기방으로 이동
@@ -34,8 +37,15 @@ function Main_() {
     }
     navigate('/room/wait', { state: { roomPW: roomPW.data.room_code } });
   };
+  // 기존에 플레이했던 게임방이 있다면 방 제거
+  const deleteRoom = async () => {
+    if (roomCode) {
+      await deleteGameRoom(roomCode);
+    }
+  };
 
   useEffect(() => {
+    deleteRoom();
     resetCurrentBtnState();
     resetResultCondition();
     resetRoomSet();
