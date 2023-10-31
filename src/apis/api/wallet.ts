@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { defaultInstance } from '../utils/instance';
 
 // 유저 정보(유저 정보 + 유저 주식 정보) 가져오기
@@ -5,8 +6,13 @@ export const getUserInfo = async (roomCode: string) => {
   try {
     const { data, status } = await defaultInstance.get(`/users/${roomCode}`);
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
@@ -21,8 +27,13 @@ export const getStockList = async (roomCode: string) => {
       `/stocks?pwd=${roomCode}`
     );
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
@@ -37,8 +48,13 @@ export const getNewsList = async (roomCode: string) => {
       `/stocks/news?pwd=${roomCode}`
     );
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
@@ -57,8 +73,13 @@ export const purchaseStock = async (id: number, info: InfoProps) => {
   try {
     const { data, status } = await defaultInstance.post(`/stocks/${id}`, info);
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
@@ -78,8 +99,13 @@ export const _sellStock = async (id: number, info: SellProps) => {
       data: info,
     });
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,

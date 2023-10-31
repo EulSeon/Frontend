@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { defaultInstance } from '../utils/instance';
 
 // 게임방 비밀번호 가져오기
@@ -5,8 +6,13 @@ export const getGameRoomPassword = async () => {
   try {
     const { data, status } = await defaultInstance.post(`/rooms`);
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
@@ -28,8 +34,13 @@ export const updateRoomInfo = async (roomPW: string, roomInfo: RoomInfo) => {
       roomInfo
     );
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 503,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
@@ -53,8 +64,13 @@ export const participateGameRoom = async (
       studentInfo
     );
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
@@ -67,8 +83,13 @@ export const leaveGameRoom = async (roomPW: string) => {
   try {
     const { data, status } = await defaultInstance.delete(`/users/${roomPW}`);
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
@@ -81,8 +102,13 @@ export const goNextRound = async (roomPW: string) => {
   try {
     const { data, status } = await defaultInstance.put(`/rooms/${roomPW}/next`);
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
@@ -101,8 +127,13 @@ export const checkGameResult = async (
       `/rooms/${roomPW}/result?round=${round}&opt=${opt}`
     );
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
@@ -123,8 +154,13 @@ export const saveGameResult = async (roomPW: string, round: SaveGameResult) => {
       round
     );
     return { data, status };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
+    if (e.code === 'ERR_NETWORK') {
+      return {
+        status: 500,
+        error: '네트워크 에러발생',
+      };
+    }
     return {
       status: e.response.status,
       error: e.response.data.error,
