@@ -75,8 +75,8 @@ function GameResult() {
           popup: 'animate__animated animate__fadeInDown',
         },
       }).then((result) => {
-        socket.emit('gameEnded', state.roomPW);
         if (result.isConfirmed) {
+          socket.emit('gameEnded', state.roomPW);
           navigate('/', { replace: true });
         }
       });
