@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
 import { currentRoomCode } from '@states/roomSetting';
 import { Beforeunload } from 'react-beforeunload';
+import { defaultAlert, networkErrorAlert } from '@utils/customAlert';
 
 interface Students {
   user_id: number;
@@ -31,13 +32,12 @@ function Main_() {
   const [nameState, setNameState] = useState(false); // 현재 이름이 설정되어있는지 여부
   const [codeState, setCodeState] = useState(false); // 현재 코드가 설정되어있는지 여부
   const [pwCompare, setPwCompare] = useState<{
-    // 패스워드 일치 여부
     text: string;
     state: boolean | undefined;
   }>({
     text: '프로필을 눌러 설정해주세요',
     state: undefined,
-  });
+  }); // 패스워드 일치 여부
   const [toastMessageState, setToastMessageState] = useState(false); // 토스트 메시지 상태
   const [allowSlidePrev, setAllowSlidePrev] = useState(true); // 이전 슬라이드 넘어가기 가능 여부
   const [allowSlideNext, setAllowSlideNext] = useState(true); // 다음 슬라이드 넘어가기 가능 여부
@@ -47,14 +47,14 @@ function Main_() {
   const [name, setName] = useState(''); // 학생 이름
   const [roomCode, setRoomCode] = useState(''); // 방코드
   const [persistRoomCode, setPersistRoomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
-  const [students, setStudents] = useState<Students[] | []>([]); // 현재 접속한 학생들 목록
+  const [students, setStudents] = useState<Students[]>([]); // 현재 접속한 학생들 목록
 
   // 이름 입력칸에서 엔터를 눌렀을 경우
   const handleOnNameKeyPress = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
       if (name.length === 0) {
-        alert('이름을 입력하지 않았습니다.');
+        defaultAlert('이름을 입력하지 않았습니다.');
         return;
       }
       setNameState(true); // 이름 설정 완료 상태로 설정
@@ -66,7 +66,7 @@ function Main_() {
     if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
       if (roomCode.length === 0) {
-        alert('방코드를 입력하지 않았습니다.');
+        defaultAlert('입장 코드를 입력하지 않았습니다.');
         return;
       }
       setCodeState(true);
@@ -86,7 +86,7 @@ function Main_() {
           return;
         } else if (result.status === 500) {
           setCodeState(false);
-          alert('오류가 발생했습니다. 다시 시도해주세요.');
+          networkErrorAlert();
           return;
         }
         // 사용자가 성공적으로 게임방에 참여되었다면 참여자 리스트 업데이트
@@ -101,9 +101,21 @@ function Main_() {
       }, 1000);
     }
   };
+  // 방 나가기
+  const leaveRoom = async () => {
+    if (persistRoomCode) {
+      const result = await leaveGameRoom(persistRoomCode);
+      if (result.status !== 200) {
+        console.error('오류 발생. 게임방에서 나가지 못했습니다.');
+      }
+      socket.emit('getParticipants', persistRoomCode);
+    }
+  };
 
+  // 소켓 동작
   useEffect(() => {
     if (pwCompare.state) {
+      // 패스워드가 일치할 경우
       socket.on('updateParticipants', (result: Students[] | string) => {
         if (result === 'start') {
           // 게임 시작일 경우
@@ -120,13 +132,13 @@ function Main_() {
       socket.removeAllListeners('updateParticipants');
     };
   }, [pwCompare]);
-
   // 모바일 브라우저 네비게이션바 같은 것들 고려해서 추가
-  const getScreenSize = () => {
-    const vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
-  };
   useEffect(() => {
+    const getScreenSize = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
     window.addEventListener('resize', getScreenSize);
     return () => {
       window.removeEventListener('resize', getScreenSize);
@@ -156,13 +168,12 @@ function Main_() {
       document.removeEventListener('click', handleOutsideClick, true);
     };
   }, [profileSelectorRef]);
-
+  // 새로고침의 경우를 위해 세션에 해당하는 유저 제거 + 세션 제거 + roomCode 초기화
   useEffect(() => {
-    // 새로고침의 경우를 위해 roomCode 초기화
-    // 세션에 해당하는 유저 제거 + 세션 제거
+    leaveRoom();
     setPersistRoomCode(undefined);
   }, []);
-
+  // 토스트 메시지 동작
   useEffect(() => {
     if (toastMessageState === true) {
       (swiperRef.current as any).slidePrev();
@@ -171,14 +182,6 @@ function Main_() {
       }, 3000);
     }
   }, [toastMessageState]);
-
-  const leaveRoom = async () => {
-    const result = await leaveGameRoom(persistRoomCode as string);
-    if (result.status !== 200) {
-      console.error('오류 발생. 게임방에서 나가지 못했습니다.');
-    }
-    socket.emit('getParticipants', roomCode);
-  };
 
   return (
     <Beforeunload onBeforeunload={() => '새로고침하면 방에서 나가집니다.'}>
@@ -266,7 +269,7 @@ function Main_() {
                           setNameState(false);
                         }
                       }}
-                      onChange={(e: any) => {
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setName(e.target.value);
                       }}
                     />
@@ -286,7 +289,7 @@ function Main_() {
                     disabled={!nameState ? !codeState : codeState}
                     onKeyDown={handleOnCodeKeyPress}
                     maxLength={6}
-                    onChange={(e: any) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       setRoomCode(e.target.value);
                     }}
                   />
