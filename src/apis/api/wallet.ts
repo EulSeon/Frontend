@@ -9,7 +9,7 @@ export const getUserInfo = async (roomCode: string) => {
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }
@@ -30,7 +30,7 @@ export const getStockList = async (roomCode: string) => {
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }
@@ -51,7 +51,7 @@ export const getNewsList = async (roomCode: string) => {
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }
@@ -76,7 +76,7 @@ export const purchaseStock = async (id: number, info: InfoProps) => {
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }
@@ -102,7 +102,7 @@ export const _sellStock = async (id: number, info: SellProps) => {
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }

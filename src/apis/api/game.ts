@@ -9,7 +9,7 @@ export const getGameRoomPassword = async () => {
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }
@@ -86,7 +86,7 @@ export const participateGameRoom = async (
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }
@@ -105,7 +105,7 @@ export const leaveGameRoom = async (roomPW: string) => {
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }
@@ -124,7 +124,7 @@ export const goNextRound = async (roomPW: string) => {
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }
@@ -149,7 +149,7 @@ export const checkGameResult = async (
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }
@@ -176,7 +176,7 @@ export const saveGameResult = async (roomPW: string, round: SaveGameResult) => {
   } catch (e: any) {
     if (e.code === 'ERR_NETWORK') {
       return {
-        status: 500,
+        status: 503,
         error: '네트워크 에러발생',
       };
     }
