@@ -9,10 +9,12 @@ import './swipeStyles.css';
 import { leaveGameRoom, participateGameRoom } from '@apis/api/game';
 import { socket } from 'socket';
 import { useNavigate } from 'react-router-dom';
-import { useRecoilState } from 'recoil';
-import { currentRoomCode } from '@states/roomSetting';
+import { useRecoilState, useResetRecoilState } from 'recoil';
+import { currentRoomCode, currentRound, roomSet } from '@states/roomSetting';
 import { Beforeunload } from 'react-beforeunload';
 import { defaultAlert, networkErrorAlert } from '@utils/customAlert';
+import { finishBackgroundState } from '@states/backgroundState';
+import { stockModalVals } from '@states/modalState';
 
 interface Students {
   user_id: number;
@@ -28,6 +30,11 @@ function Main_() {
   const navigate = useNavigate();
   const swiperRef = useRef();
   const profileSelectorRef = useRef<HTMLDivElement>(null);
+
+  const resetFinishBackgroundState = useResetRecoilState(finishBackgroundState);
+  const resetStockModalVals = useResetRecoilState(stockModalVals);
+  const resetRoomSet = useResetRecoilState(roomSet);
+  const resetCurrentRound = useResetRecoilState(currentRound);
 
   const [nameState, setNameState] = useState(false); // 현재 이름이 설정되어있는지 여부
   const [codeState, setCodeState] = useState(false); // 현재 코드가 설정되어있는지 여부
@@ -110,6 +117,11 @@ function Main_() {
       }
       socket.emit('getParticipants', persistRoomCode);
     }
+    // 전역변수 값들 초기화
+    resetFinishBackgroundState();
+    resetStockModalVals();
+    resetRoomSet();
+    resetCurrentRound();
   };
 
   // 소켓 동작
