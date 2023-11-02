@@ -14,6 +14,7 @@ import {
   currentRoomCode,
 } from '@states/roomSetting';
 import { useRecoilState, useResetRecoilState } from 'recoil';
+import { socket } from 'socket';
 
 function Main_() {
   const navigate = useNavigate();
@@ -51,6 +52,7 @@ function Main_() {
     resetRoomSet();
     resetSystemVisible();
     resetcurrentRound();
+    socket.removeAllListeners();
   }, []);
 
   return (
