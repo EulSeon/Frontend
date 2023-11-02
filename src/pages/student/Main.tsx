@@ -91,7 +91,7 @@ function Main_() {
             state: false,
           });
           return;
-        } else if (result.status === 500) {
+        } else if (result.status === 500 || result.status === 503) {
           setCodeState(false);
           networkErrorAlert();
           return;
@@ -184,6 +184,10 @@ function Main_() {
   useEffect(() => {
     leaveRoom();
     setPersistRoomCode(undefined);
+
+    return () => {
+      socket.removeAllListeners();
+    };
   }, []);
   // 토스트 메시지 동작
   useEffect(() => {
@@ -548,7 +552,7 @@ const NameForm = styled.form<{
   & > div {
     background: none;
     position: relative;
-    width: 100%;
+    width: 75%;
     max-width: 296px;
 
     & > input {
@@ -589,7 +593,7 @@ const NameForm = styled.form<{
     & > img {
       position: absolute;
       top: 35%;
-      right: 80px;
+      right: 6vw;
       display: ${(props) => (props.$nameState ? 'block' : 'none')};
       animation: ${(props) => editIcon_slide(props.$nameState)} 1s 0s forwards;
     }
