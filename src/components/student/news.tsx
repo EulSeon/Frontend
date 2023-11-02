@@ -4,6 +4,8 @@ import { useRecoilState } from 'recoil';
 import { currentRoomCode } from '@states/roomSetting';
 import { getNewsList } from '@apis/api/wallet';
 import { useQuery } from 'react-query';
+import { defaultAlert, networkErrorAlert } from '@utils/customAlert';
+import { useNavigate } from 'react-router-dom';
 
 interface NewsList {
   com_name: string;
@@ -12,11 +14,23 @@ interface NewsList {
 }
 
 function News() {
+  const navigate = useNavigate();
   const [roomCode] = useRecoilState(currentRoomCode); // 방코드
 
   // 뉴스 리스트 가져오기
   const getNews = async () => {
-    const newsList = await getNewsList(roomCode as string);
+    if (!roomCode) {
+      defaultAlert('오류가 발생했습니다.');
+      setTimeout(() => {
+        navigate('/student', { replace: true });
+      }, 1000);
+      return;
+    }
+    const newsList = await getNewsList(roomCode);
+    if (newsList.status === 500 || newsList.status === 503) {
+      networkErrorAlert();
+      return;
+    }
     const nNewsList = newsList.data.descriptions.map(
       (description: string, index: number) => {
         return {

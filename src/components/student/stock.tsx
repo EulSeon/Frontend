@@ -5,6 +5,8 @@ import { stockModalState, stockModalVals } from '@states/modalState';
 import { currentRoomCode } from '@states/roomSetting';
 import { getStockList } from '@apis/api/wallet';
 import { useQuery } from 'react-query';
+import { defaultAlert, networkErrorAlert } from '@utils/customAlert';
+import { useNavigate } from 'react-router-dom';
 
 interface StockList {
   company_name: string;
@@ -15,12 +17,25 @@ interface StockList {
 }
 
 function Stock() {
+  const navigate = useNavigate();
   const [, setModalState] = useRecoilState(stockModalState); // 모달 visible
   const [, setModalVals] = useRecoilState(stockModalVals); // 모달창 값
   const [roomCode] = useRecoilState(currentRoomCode); // 방코드
 
   const _getStockList = async () => {
-    const list = await getStockList(roomCode as string);
+    if (!roomCode) {
+      defaultAlert('오류가 발생했습니다.');
+      setTimeout(() => {
+        navigate('/student', { replace: true });
+      }, 1000);
+      return;
+    }
+    const list = await getStockList(roomCode);
+    if (list.status === 500 || list.status === 503) {
+      networkErrorAlert();
+      return;
+    }
+
     return list.data;
   };
 
@@ -50,7 +65,14 @@ function Stock() {
                     inStock: undefined,
                     first_menu_price: stock.previousPrice,
                     second_menu_price: stock.currentPrice,
-                    info: `전 라운드가 보다 ${stock.difference}원(${stock.percent}%)이 올랐어요`,
+                    info:
+                      stock.difference >= 0
+                        ? `전 라운드가 보다 ${stock.difference.toLocaleString(
+                            'ko-KR'
+                          )}원(${stock.percent}%)이 올랐어요`
+                        : `전 라운드가 보다 ${stock.difference.toLocaleString(
+                            'ko-KR'
+                          )}원(${stock.percent}%)이 내렸어요`,
                     difference: stock.difference,
                   });
                   setModalState((pre) => ({
