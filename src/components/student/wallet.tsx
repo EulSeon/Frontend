@@ -5,6 +5,8 @@ import { stockModalState, stockModalVals } from '@states/modalState';
 import { currentRoomCode } from '@states/roomSetting';
 import { getUserInfo } from '@apis/api/wallet';
 import { useQuery } from 'react-query';
+import { defaultAlert, networkErrorAlert } from '@utils/customAlert';
+import { useNavigate } from 'react-router-dom';
 
 interface StockList {
   com_name: string;
@@ -27,15 +29,23 @@ interface UserInfo {
 }
 
 function Wallet() {
+  const navigate = useNavigate();
   const [, setModalState] = useRecoilState(stockModalState); // 모달 visible
   const [, setModalVals] = useRecoilState(stockModalVals); // 모달창 값
   const [roomCode] = useRecoilState(currentRoomCode); // 방코드
   const [stockList, setStockList] = useState<StockList[]>([]);
 
   const getUserInformation = async () => {
-    const info = await getUserInfo(roomCode as string);
-    if (info.status === 500) {
-      alert('오류가 발생했습니다.');
+    if (!roomCode) {
+      defaultAlert('오류가 발생했습니다.');
+      setTimeout(() => {
+        navigate('/student', { replace: true });
+      }, 1000);
+      return;
+    }
+    const info = await getUserInfo(roomCode);
+    if (info.status === 500 || info.status === 503) {
+      networkErrorAlert();
       return;
     }
 
@@ -92,7 +102,17 @@ function Wallet() {
         <AssetBox>
           <Information>
             <p>총평가손익</p>
-            <TotalIncome>{data?.user_info?.total_roi}%</TotalIncome>
+            <TotalIncome
+              $color={
+                data?.user_info?.total_roi && data?.user_info?.total_roi > 0
+                  ? 'red'
+                  : data?.user_info?.total_roi === 0
+                  ? 'black'
+                  : 'blue'
+              }
+            >
+              {data?.user_info?.total_roi}%
+            </TotalIncome>
           </Information>
           <Information>
             <p>보유주식총액</p>
@@ -135,7 +155,14 @@ function Wallet() {
                           inStock: stock.count,
                           first_menu_price: stock.buy_average,
                           second_menu_price: stock.current_price,
-                          info: `전 라운드가 보다 ${stock.difference_price}원(${stock.percent}%)이 올랐어요`,
+                          info:
+                            stock.difference_price >= 0
+                              ? `전 라운드가 보다 ${stock.difference_price.toLocaleString(
+                                  'ko-KR'
+                                )}원(${stock.percent}%)이 올랐어요`
+                              : `전 라운드가 보다 ${stock.difference_price.toLocaleString(
+                                  'ko-KR'
+                                )}원(${stock.percent}%)이 내렸어요`,
                           difference: stock.difference_price,
                         });
                         setModalState((pre) => ({
@@ -226,8 +253,8 @@ const Information = styled.div`
   }
 `;
 
-const TotalIncome = styled.p`
-  color: #ff0000;
+const TotalIncome = styled.p<{ $color: string }>`
+  color: ${(props) => props.$color};
 `;
 
 const Contents_None = styled.div`

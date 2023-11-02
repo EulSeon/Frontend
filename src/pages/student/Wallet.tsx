@@ -142,7 +142,15 @@ function Game() {
             <h2>{modalVals.inStock}주 보유</h2>
           ) : null}
         </div>
-        <Price>
+        <Price
+          $color={
+            modalVals.second_menu_price - modalVals.first_menu_price > 0
+              ? 'red'
+              : modalVals.second_menu_price - modalVals.first_menu_price === 0
+              ? 'black'
+              : 'blue'
+          }
+        >
           <div>
             <p>
               {modalVals.kind === 'wallet' ? '평균 매입가' : '전 라운드 가격'}
@@ -158,7 +166,17 @@ function Game() {
             <p>{modalVals.second_menu_price.toLocaleString('ko-KR')}</p>
           </div>
         </Price>
-        <PopUP_Notice>{modalVals.info}</PopUP_Notice>
+        <PopUP_Notice
+          $color={
+            modalVals.difference > 0
+              ? 'red'
+              : modalVals.difference === 0
+              ? 'black'
+              : 'blue'
+          }
+        >
+          {modalVals.info}
+        </PopUP_Notice>
         {selectedNav === 'wallet' ? (
           <PopUP_Button>
             <button
@@ -384,7 +402,7 @@ const PopUP = styled.div<{ $visible: boolean }>`
   }
 `;
 
-const Price = styled.div`
+const Price = styled.div<{ $color: string }>`
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -415,15 +433,15 @@ const Price = styled.div`
 
     &:nth-child(2) {
       & > p:last-child {
-        color: #ff0000;
+        color: ${(props) => props.$color};
       }
     }
   }
 `;
 
-const PopUP_Notice = styled.p`
+const PopUP_Notice = styled.p<{ $color: string }>`
   width: 100%;
-  color: #ff0000;
+  color: ${(props) => props.$color};
   font-size: 1.6rem;
   font-style: normal;
   font-weight: 400;
