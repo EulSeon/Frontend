@@ -64,7 +64,6 @@ export const getNewsList = async (roomCode: string) => {
 
 interface InfoProps {
   purchase_num: number; // 주식 구매 개수
-  round_num: number; // 현재 라운드
   pwd: string; // 방코드
 }
 

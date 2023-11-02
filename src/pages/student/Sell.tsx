@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { css, keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
@@ -9,51 +8,71 @@ import { useNavigate } from 'react-router-dom';
 import { socket } from 'socket';
 import { getUserInfo, _sellStock } from '@apis/api/wallet';
 import { useQuery } from 'react-query';
-import { currentRoomCode } from '@states/roomSetting';
+import { currentRoomCode, currentRound, roomSet } from '@states/roomSetting';
+import { defaultAlert, networkErrorAlert } from '@utils/customAlert';
 
 function Sell() {
   const navigate = useNavigate();
   const [sellStock, setSellStock] = useState<string>(''); // 판매할 주식 수
-  const [_, setModalState] = useRecoilState(stockModalState);
+  const [, setModalState] = useRecoilState(stockModalState);
   const [modalVals] = useRecoilState(stockModalVals); // 모달에 있는 값들
   const [notice, setNotice] = useState<{
     available: boolean | undefined;
     content: string;
   }>({ available: true, content: '' }); // 안내 문구
-  const [roomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
-  const getUserInformation = async () => {
-    const info = await getUserInfo(roomCode as string);
-    return info.data;
-  };
-
-  const {
-    data: {
-      user_info: { using_asset },
-    },
-  } = useQuery('userInfo', getUserInformation);
-
   const [timer, setTimer] = useState<{
     min: string | undefined;
     sec: string | undefined;
   }>({ min: undefined, sec: undefined }); // 타이머 시간
+  const [roomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
+  const [round] = useRecoilState(currentRound); // 현재 라운드
+  const [roomSetting] = useRecoilState(roomSet); // 게임방 세팅값
+
+  const getUserInformation = async () => {
+    if (!roomCode) {
+      defaultAlert('오류가 발생했습니다.');
+      setTimeout(() => {
+        navigate('/student', { replace: true });
+      }, 1000);
+      return;
+    }
+    const info = await getUserInfo(roomCode);
+    return info.data;
+  };
+
+  const { data } = useQuery('userInfo', getUserInformation);
 
   const sell = async () => {
+    if (!modalVals.id || sellStock.length === 0) {
+      defaultAlert('오류가 발생했습니다. 다시 시도해주세요');
+      return;
+    }
+    if (!roomCode) {
+      defaultAlert('오류가 발생했습니다.');
+      setTimeout(() => {
+        navigate('/student', { replace: true });
+      }, 1000);
+      return;
+    }
     const result = await _sellStock(modalVals.id as number, {
       sell_num: Number(sellStock),
       pwd: roomCode as string,
     });
-    if (result.status !== 200) {
-      alert('주식 매수에 실패했습니다.');
+    if (result.status === 503) {
+      networkErrorAlert();
+      return;
+    } else if (result.status === 500) {
+      defaultAlert('주식 매도에 실패했습니다.');
       return;
     }
     navigate(-1);
   };
 
   useEffect(() => {
-    socket.emit('room_connect', roomCode); // 방 접속 이벤트 : 임시 패스워드 값 넣어둠.
-    socket.on('timerTick', (info: any) => {
+    socket.emit('room_connect', roomCode);
+    socket.on('timerTick', (remainingTime: number) => {
       // 타이머 시간 가는 중 ...
-      const { min, sec } = convertSecondsToMinute(info);
+      const { min, sec } = convertSecondsToMinute(remainingTime);
       setTimer({ min, sec });
     });
     socket.on('timerEnded', () => {
@@ -116,7 +135,7 @@ function Sell() {
         <AvailableAssets>
           <p>
             {(
-              using_asset +
+              data?.user_info?.using_asset +
               Number(sellStock) * modalVals.second_menu_price
             ).toLocaleString('ko-KR')}
             원
@@ -129,8 +148,12 @@ function Sell() {
               return (
                 <button
                   key={index}
-                  onClick={(e: any) => {
-                    setSellStock((pre) => pre + String(e.target.innerText));
+                  onClick={(
+                    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+                  ) => {
+                    setSellStock(
+                      (pre) => pre + String((e.target as HTMLElement).innerText)
+                    );
                   }}
                 >
                   {index + 1}
@@ -143,8 +166,12 @@ function Sell() {
               return (
                 <button
                   key={index}
-                  onClick={(e: any) => {
-                    setSellStock((pre) => pre + String(e.target.innerText));
+                  onClick={(
+                    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+                  ) => {
+                    setSellStock(
+                      (pre) => pre + String((e.target as HTMLElement).innerText)
+                    );
                   }}
                 >
                   {index + 4}
@@ -157,8 +184,12 @@ function Sell() {
               return (
                 <button
                   key={index}
-                  onClick={(e: any) => {
-                    setSellStock((pre) => pre + String(e.target.innerText));
+                  onClick={(
+                    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+                  ) => {
+                    setSellStock(
+                      (pre) => pre + String((e.target as HTMLElement).innerText)
+                    );
                   }}
                 >
                   {index + 7}
@@ -169,9 +200,11 @@ function Sell() {
           <Line>
             <button></button>
             <button
-              onClick={(e: any) => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
                 if (sellStock.length === 0) return; // 0주는 입력할 수 없도록
-                setSellStock((pre) => pre + String(e.target.innerText));
+                setSellStock(
+                  (pre) => pre + String((e.target as HTMLElement).innerText)
+                );
               }}
             >
               0
@@ -200,7 +233,9 @@ function Sell() {
         </Button>
         <RoundBox>
           <Round>
-            <p>N / 10 라운드</p>
+            <p>
+              {round} / {roomSetting.round_num} 라운드
+            </p>
             <p>
               {' '}
               {timer.min !== undefined && timer.sec !== undefined

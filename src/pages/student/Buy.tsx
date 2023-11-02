@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from 'react';
 import { css, keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
@@ -7,9 +6,10 @@ import { stockModalState, stockModalVals } from '@states/modalState';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 import { useNavigate } from 'react-router-dom';
 import { getUserInfo, purchaseStock } from '@apis/api/wallet';
-import { currentRoomCode } from '@states/roomSetting';
+import { currentRoomCode, currentRound, roomSet } from '@states/roomSetting';
 import { socket } from 'socket';
 import { useQuery } from 'react-query';
+import { defaultAlert, networkErrorAlert } from '@utils/customAlert';
 
 function Buy() {
   const navigate = useNavigate();
@@ -26,31 +26,45 @@ function Buy() {
     sec: string | undefined;
   }>({ min: undefined, sec: undefined }); // 타이머 시간
   const [roomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
-
-  useEffect(() => {
-    getUserInformation();
-  }, []);
+  const [round] = useRecoilState(currentRound); // 현재 라운드
+  const [roomSetting] = useRecoilState(roomSet); // 게임방 세팅값
 
   const getUserInformation = async () => {
-    const info = await getUserInfo(roomCode as string);
+    if (!roomCode) {
+      defaultAlert('오류가 발생했습니다.');
+      setTimeout(() => {
+        navigate('/student', { replace: true });
+      }, 1000);
+      return;
+    }
+    const info = await getUserInfo(roomCode);
     return info.data;
   };
 
-  const {
-    data: {
-      stock_list,
-      user_info: { using_asset },
-    },
-  } = useQuery('userInfo', getUserInformation);
+  const { data } = useQuery('userInfo', getUserInformation);
 
   const purchase = async () => {
+    if (!modalVals.id || buyStock.length === 0) {
+      defaultAlert('오류가 발생했습니다. 다시 시도해주세요');
+      return;
+    }
+    if (!roomCode) {
+      defaultAlert('오류가 발생했습니다.');
+      setTimeout(() => {
+        navigate('/student', { replace: true });
+      }, 1000);
+      return;
+    }
     const result = await purchaseStock(modalVals.id as number, {
       purchase_num: Number(buyStock),
-      round_num: 1,
       pwd: roomCode as string,
     });
+    if (result.status === 503) {
+      networkErrorAlert();
+      return;
+    }
     if (result.status !== 200) {
-      alert('주식 매수에 실패했습니다.');
+      defaultAlert('주식 매수에 실패했습니다.');
       return;
     }
     navigate(-1);
@@ -58,9 +72,9 @@ function Buy() {
 
   useEffect(() => {
     socket.emit('room_connect', roomCode);
-    socket.on('timerTick', (info: any) => {
+    socket.on('timerTick', (remainingTime: number) => {
       // 타이머 시간 가는 중 ...
-      const { min, sec } = convertSecondsToMinute(info);
+      const { min, sec } = convertSecondsToMinute(remainingTime);
       setTimer({ min, sec });
     });
     socket.on('timerEnded', () => {
@@ -69,14 +83,14 @@ function Buy() {
   }, []);
 
   useEffect(() => {
-    if (buyStock.length === 0) {
+    if (buyStock.length === 0 && data && data.stock_list) {
       // 몇 주를 살지 입력하지 않은 경우
       setNotice({
         available: undefined,
         content: `${
-          stock_list[modalVals.id as number] === undefined
+          data.stock_list[modalVals.id as number] === undefined
             ? 0
-            : stock_list[modalVals.id as number].count
+            : data.stock_list[modalVals.id as number].count
         }주 보유중`,
       });
       setUsingAsset(0);
@@ -84,7 +98,7 @@ function Buy() {
       // 몇 주를 살지 입력한 경우 남은 가용자산 계산
       const useAsset = Number(buyStock) * modalVals.second_menu_price; // 사용할 금액
 
-      if (using_asset && using_asset >= useAsset) {
+      if (data?.user_info?.using_asset >= useAsset) {
         // 가용자산이 충분한 경우
         setNotice({
           available: true,
@@ -127,7 +141,9 @@ function Buy() {
         </BuyStock>
         <AvailableAssets>
           <p>
-            {(using_asset && using_asset - usingAsset).toLocaleString('ko-KR')}
+            {(data?.user_info?.using_asset - usingAsset).toLocaleString(
+              'ko-KR'
+            )}
             원
           </p>
           <p>가용자산</p>
@@ -138,8 +154,12 @@ function Buy() {
               return (
                 <button
                   key={index}
-                  onClick={(e: any) => {
-                    setBuyStock((pre) => pre + String(e.target.innerText));
+                  onClick={(
+                    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+                  ) => {
+                    setBuyStock(
+                      (pre) => pre + String((e.target as HTMLElement).innerText)
+                    );
                   }}
                 >
                   {index + 1}
@@ -152,8 +172,12 @@ function Buy() {
               return (
                 <button
                   key={index}
-                  onClick={(e: any) => {
-                    setBuyStock((pre) => pre + String(e.target.innerText));
+                  onClick={(
+                    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+                  ) => {
+                    setBuyStock(
+                      (pre) => pre + String((e.target as HTMLElement).innerText)
+                    );
                   }}
                 >
                   {index + 4}
@@ -166,8 +190,12 @@ function Buy() {
               return (
                 <button
                   key={index}
-                  onClick={(e: any) => {
-                    setBuyStock((pre) => pre + String(e.target.innerText));
+                  onClick={(
+                    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+                  ) => {
+                    setBuyStock(
+                      (pre) => pre + String((e.target as HTMLElement).innerText)
+                    );
                   }}
                 >
                   {index + 7}
@@ -178,9 +206,11 @@ function Buy() {
           <Line>
             <button></button>
             <button
-              onClick={(e: any) => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
                 if (buyStock.length === 0) return; // 0주는 입력할 수 없도록
-                setBuyStock((pre) => pre + String(e.target.innerText));
+                setBuyStock(
+                  (pre) => pre + String((e.target as HTMLElement).innerText)
+                );
               }}
             >
               0
@@ -209,7 +239,9 @@ function Buy() {
         </Button>
         <RoundBox>
           <Round>
-            <p>N / 10 라운드</p>
+            <p>
+              {round} / {roomSetting.round_num} 라운드
+            </p>
             <p>
               {' '}
               {timer.min !== undefined && timer.sec !== undefined
