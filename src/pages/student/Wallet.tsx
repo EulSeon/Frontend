@@ -32,6 +32,11 @@ function Game() {
 
   useEffect(() => {
     socket.emit('room_connect', roomCode); // 방 접속 이벤트
+    socket.on('connectComplete', () => {
+      // 소켓 connect가 완료된 후에 getParticipants 이벤트 emit
+      socket.emit('startTimer', roomCode);
+    });
+
     socket.on('timerStarted', () => {
       // 타이머 시작되면 라운드 시작
       setFinish(false);
