@@ -97,9 +97,8 @@ function Main_() {
           return;
         }
         // 사용자가 성공적으로 게임방에 참여되었다면 참여자 리스트 업데이트
-        socket.emit('room_connect', roomCode); // 방 접속 이벤트
-        socket.emit('getParticipants', roomCode);
         setPersistRoomCode(roomCode);
+        socket.emit('room_connect', roomCode); // 방 접속 이벤트
         setAllowSlideNext(true);
         setPwCompare({
           text: '패스워드가 일치합니다.',
@@ -126,19 +125,16 @@ function Main_() {
 
   // 소켓 동작
   useEffect(() => {
-    if (pwCompare.state) {
-      // 패스워드가 일치할 경우
-      socket.on('updateParticipants', (result: Students[] | string) => {
-        if (result === 'start') {
-          // 게임 시작일 경우
-          navigate('wallet', {
-            state: { roomPW: roomCode },
-          });
-        } else {
-          setStudents(result as Students[]);
-        }
-      });
-    }
+    socket.on('updateParticipants', (result: Students[] | string) => {
+      if (result === 'start') {
+        // 게임 시작일 경우
+        navigate('wallet', {
+          state: { roomPW: roomCode },
+        });
+      } else {
+        setStudents(result as Students[]);
+      }
+    });
 
     return () => {
       socket.removeAllListeners('updateParticipants');
@@ -189,6 +185,12 @@ function Main_() {
       socket.removeAllListeners();
     };
   }, []);
+  useEffect(() => {
+    socket.on('connectComplete', () => {
+      // 소켓 connect가 완료된 후에 getParticipants 이벤트 emit
+      socket.emit('getParticipants', persistRoomCode);
+    });
+  }, [persistRoomCode]);
   // 토스트 메시지 동작
   useEffect(() => {
     if (toastMessageState === true) {
@@ -239,34 +241,49 @@ function Main_() {
                 {currentProfile === 0 ? (
                   <div>
                     <img
-                      src="/images/defaultProfile-blue1.svg"
+                      src="/images/defaultProfile-blue1.png"
                       onClick={() => {
                         setProfileVisible(true);
                       }}
                     />
-                    <img src="/icons/modify-profile_icon.svg" />
+                    <img
+                      src="/icons/modify-profile_icon.svg"
+                      onClick={() => {
+                        setProfileVisible(true);
+                      }}
+                    />
                   </div>
                 ) : null}
                 {currentProfile === 1 ? (
                   <div>
                     <img
-                      src="/images/defaultProfile-blue2.svg"
+                      src="/images/defaultProfile-blue2.png"
                       onClick={() => {
                         setProfileVisible(true);
                       }}
                     />
-                    <img src="/icons/modify-profile_icon.svg" />
+                    <img
+                      src="/icons/modify-profile_icon.svg"
+                      onClick={() => {
+                        setProfileVisible(true);
+                      }}
+                    />
                   </div>
                 ) : null}
                 {currentProfile === 2 ? (
                   <div>
                     <img
-                      src="/images/defaultProfile-blue3.svg"
+                      src="/images/defaultProfile-blue3.png"
                       onClick={() => {
                         setProfileVisible(true);
                       }}
                     />
-                    <img src="/icons/modify-profile_icon.svg" />
+                    <img
+                      src="/icons/modify-profile_icon.svg"
+                      onClick={() => {
+                        setProfileVisible(true);
+                      }}
+                    />
                   </div>
                 ) : null}
                 <NameForm
@@ -324,19 +341,19 @@ function Main_() {
                 </SlidingDoor>
                 <Profiles>
                   <img
-                    src="/images/defaultProfile-gray1.svg"
+                    src="/images/defaultProfile-gray1.png"
                     onClick={() => {
                       setCurrentProfile(0);
                     }}
                   />
                   <img
-                    src="/images/defaultProfile-gray2.svg"
+                    src="/images/defaultProfile-gray2.png"
                     onClick={() => {
                       setCurrentProfile(1);
                     }}
                   />
                   <img
-                    src="/images/defaultProfile-gray3.svg"
+                    src="/images/defaultProfile-gray3.png"
                     onClick={() => {
                       setCurrentProfile(2);
                     }}
@@ -373,13 +390,13 @@ function Main_() {
                     return (
                       <li key={index}>
                         {student.profile_num === 0 ? (
-                          <img src="/images/defaultProfile-blue1.svg" />
+                          <img src="/images/defaultProfile-blue1.png" />
                         ) : null}
                         {student.profile_num === 1 ? (
-                          <img src="/images/defaultProfile-blue2.svg" />
+                          <img src="/images/defaultProfile-blue2.png" />
                         ) : null}
                         {student.profile_num === 2 ? (
-                          <img src="/images/defaultProfile-blue3.svg" />
+                          <img src="/images/defaultProfile-blue3.png" />
                         ) : null}
                         <p>{student.user_name}</p>
                       </li>
@@ -532,12 +549,14 @@ const SetMyInfo = styled.div<{
       width: 100px;
       height: 100px;
       border-radius: 100px;
+      cursor: pointer;
     }
 
     & > img:nth-child(2) {
       position: absolute;
       bottom: 0;
       right: 5px;
+      cursor: pointer;
     }
   }
 `;
@@ -726,6 +745,12 @@ const Profiles = styled.div`
   padding: 32px 16px 35px 16px;
   gap: 10px;
   overflow-x: auto;
+
+  & > img {
+    width: 100px;
+    height: 100px;
+    cursor: pointer;
+  }
 `;
 
 const ThirdPage = styled.div`

@@ -137,7 +137,10 @@ function WaitingRoom() {
 
   useEffect(() => {
     socket.emit('room_connect', state.roomPW); // 방 접속 이벤트
-    socket.emit('getParticipants', state.roomPW); // 참여자 목록 요청
+    socket.on('connectComplete', () => {
+      // 소켓 connect가 완료된 후에 getParticipants 이벤트 emit
+      socket.emit('getParticipants', state.roomPW); // 참여자 목록 요청
+    });
     socket.on('updateParticipants', (result: Students[] | string) => {
       if (result === 'start') {
         // 게임 시작일 경우
@@ -318,13 +321,13 @@ function WaitingRoom() {
                 return (
                   <UserProfile key={index}>
                     {student.profile_num === 0 ? (
-                      <img src="/images/defaultProfile-blue1.svg" />
+                      <img src="/images/defaultProfile-blue1.png" />
                     ) : null}
                     {student.profile_num === 1 ? (
-                      <img src="/images/defaultProfile-blue2.svg" />
+                      <img src="/images/defaultProfile-blue2.png" />
                     ) : null}
                     {student.profile_num === 2 ? (
-                      <img src="/images/defaultProfile-blue3.svg" />
+                      <img src="/images/defaultProfile-blue3.png" />
                     ) : null}
                     <p>{student.user_name}</p>
                   </UserProfile>

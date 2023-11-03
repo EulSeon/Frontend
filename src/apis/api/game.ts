@@ -167,7 +167,6 @@ interface SaveGameResult {
 // 게임 결과 저장하기
 export const saveGameResult = async (roomPW: string, round: SaveGameResult) => {
   try {
-    console.log(round);
     const { data, status } = await defaultInstance.post(
       `/rooms/${roomPW}/result`,
       round

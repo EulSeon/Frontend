@@ -76,13 +76,13 @@ function Wallet() {
     <>
       <Profile>
         {data?.user_info?.profile_num === 0 ? (
-          <img src="/images/defaultProfile-gray1.svg" />
+          <img src="/images/defaultProfile-gray1.png" />
         ) : null}
         {data?.user_info?.profile_num === 1 ? (
-          <img src="/images/defaultProfile-gray2.svg" />
+          <img src="/images/defaultProfile-gray2.png" />
         ) : null}
         {data?.user_info?.profile_num === 2 ? (
-          <img src="/images/defaultProfile-gray3.svg" />
+          <img src="/images/defaultProfile-gray3.png" />
         ) : null}
         <p>{data?.user_info?.username}</p>
       </Profile>

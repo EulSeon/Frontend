@@ -158,13 +158,13 @@ function GameResult() {
                       <tr key={index}>
                         <td>
                           {student.profile_num === 0 ? (
-                            <Profile src="/images/defaultProfile-blue1.svg" />
+                            <Profile src="/images/defaultProfile-blue1.png" />
                           ) : null}
                           {student.profile_num === 1 ? (
-                            <Profile src="/images/defaultProfile-blue2.svg" />
+                            <Profile src="/images/defaultProfile-blue2.png" />
                           ) : null}
                           {student.profile_num === 2 ? (
-                            <Profile src="/images/defaultProfile-blue3.svg" />
+                            <Profile src="/images/defaultProfile-blue3.png" />
                           ) : null}
                           <p>{student.name}</p>
                         </td>
