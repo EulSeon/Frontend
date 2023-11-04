@@ -179,6 +179,10 @@ function Main_() {
   // 새로고침의 경우를 위해 세션에 해당하는 유저 제거 + 세션 제거 + roomCode 초기화
   useEffect(() => {
     leaveRoom();
+    if (persistRoomCode) {
+      socket.emit('stopTimer', persistRoomCode); // 타이머를 멈추는 이벤트
+      socket.emit('deleteRoom', persistRoomCode);
+    }
     setPersistRoomCode(undefined);
 
     return () => {

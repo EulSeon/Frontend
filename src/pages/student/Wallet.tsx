@@ -13,6 +13,7 @@ import { stockModalState, stockModalVals } from '@states/modalState';
 import { finishBackgroundState } from '@states/backgroundState';
 import { roomSet, currentRoomCode, currentRound } from '@states/roomSetting';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
+import { networkErrorAlert } from '@utils/customAlert';
 import { socket } from 'socket';
 
 function Game() {
@@ -76,6 +77,13 @@ function Game() {
         }));
       }
     );
+    socket.on('leaveRoomSuccess', () => {
+      // 유저들이 방에서 빠져나가면 방 제거하라고 알림.
+      networkErrorAlert('사라진 게임방입니다.');
+      setTimeout(() => {
+        navigate('/student', { replace: true });
+      }, 1000);
+    });
   }, []);
 
   const onClickBlackBackground = (e: any) => {

@@ -41,18 +41,31 @@ function Main_() {
   // 기존에 플레이했던 게임방이 있다면 방 제거
   const deleteRoom = async () => {
     if (roomCode) {
-      await deleteGameRoom(roomCode);
+      // 방에 있던 사람들 나가게 하기
+      socket.emit('leaveRoom', roomCode); // 게임 시작 이벤트
     }
   };
 
   useEffect(() => {
-    deleteRoom();
+    socket.removeAllListeners();
+    socket.emit('room_connect', roomCode); // 방 접속 이벤트
+    socket.on('connectComplete', () => {
+      deleteRoom();
+    });
     resetCurrentBtnState();
     resetResultCondition();
     resetRoomSet();
     resetSystemVisible();
     resetcurrentRound();
-    socket.removeAllListeners();
+    socket.on('delete_Room', async () => {
+      if (roomCode) {
+        await deleteGameRoom(roomCode);
+      }
+    });
+
+    return () => {
+      socket.removeAllListeners();
+    };
   }, []);
 
   return (
