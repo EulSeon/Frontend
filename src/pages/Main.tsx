@@ -42,7 +42,7 @@ function Main_() {
   const deleteRoom = async () => {
     if (roomCode) {
       // 방에 있던 사람들 나가게 하기
-      socket.emit('leaveRoom', roomCode); // 게임 시작 이벤트
+      socket.emit('deleteRoom', roomCode); // 게임 시작 이벤트
     }
   };
 
@@ -50,6 +50,7 @@ function Main_() {
     socket.removeAllListeners();
     socket.emit('room_connect', roomCode); // 방 접속 이벤트
     socket.on('connectComplete', () => {
+      socket.emit('stopTimer', roomCode); // 타이머를 멈추는 이벤트
       deleteRoom();
     });
     resetCurrentBtnState();

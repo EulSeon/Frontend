@@ -115,6 +115,7 @@ function Main_() {
         console.error('오류 발생. 게임방에서 나가지 못했습니다.');
       }
       socket.emit('getParticipants', persistRoomCode);
+      socket.emit('leaveRoom', persistRoomCode);
     }
     // 전역변수 값들 초기화
     resetFinishBackgroundState();
@@ -179,10 +180,6 @@ function Main_() {
   // 새로고침의 경우를 위해 세션에 해당하는 유저 제거 + 세션 제거 + roomCode 초기화
   useEffect(() => {
     leaveRoom();
-    if (persistRoomCode) {
-      socket.emit('stopTimer', persistRoomCode); // 타이머를 멈추는 이벤트
-      socket.emit('deleteRoom', persistRoomCode);
-    }
     setPersistRoomCode(undefined);
 
     return () => {

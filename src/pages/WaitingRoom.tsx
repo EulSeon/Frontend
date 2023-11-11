@@ -88,6 +88,7 @@ function WaitingRoom() {
       setVisible(true);
       setCurrentBtn('game');
       socket.emit('game_start', state.roomPW); // 게임 시작 이벤트
+      socket.emit('startTimer', state.roomPW); // 타이머 시작 이벤트
     } else if (result.status === 404) {
       networkErrorAlert('게임방이 존재하지 않습니다');
     } else if (result.status === 503) {
@@ -169,7 +170,7 @@ function WaitingRoom() {
 
     return () => {
       socket.removeAllListeners('timerEnded');
-      socket.emit('stopTimer', state.roomPW); // 타이머를 멈추는 이벤트
+      // socket.emit('stopTimer', state.roomPW); // 타이머를 멈추는 이벤트
     };
   }, []);
 

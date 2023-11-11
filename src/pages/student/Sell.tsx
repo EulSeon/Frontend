@@ -69,7 +69,6 @@ function Sell() {
   };
 
   useEffect(() => {
-    socket.emit('room_connect', roomCode);
     socket.on('timerTick', (remainingTime: number) => {
       // 타이머 시간 가는 중 ...
       const { min, sec } = convertSecondsToMinute(remainingTime);
@@ -78,13 +77,18 @@ function Sell() {
     socket.on('timerEnded', () => {
       navigate('/student/wallet'); // 라운드 종료시 게임방 메인페이지로 이동
     });
-    socket.on('leaveRoomSuccess', () => {
+    socket.on('timerStopped', () => {
       // 유저들이 방에서 빠져나가면 방 제거하라고 알림.
-      networkErrorAlert('사라진 게임방입니다.');
-      setTimeout(() => {
-        navigate('/student', { replace: true });
-      }, 1000);
+      // networkErrorAlert('사라진 게임방입니다.');
+      // setTimeout(() => {
+      //   navigate('/student', { replace: true });
+      // }, 1000);
+      navigate('/student', { replace: true });
     });
+
+    return () => {
+      socket.removeAllListeners();
+    };
   }, []);
 
   useEffect(() => {

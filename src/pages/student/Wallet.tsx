@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { css, keyframes, styled } from 'styled-components';
@@ -13,7 +12,7 @@ import { stockModalState, stockModalVals } from '@states/modalState';
 import { finishBackgroundState } from '@states/backgroundState';
 import { roomSet, currentRoomCode, currentRound } from '@states/roomSetting';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
-import { networkErrorAlert } from '@utils/customAlert';
+// import { networkErrorAlert } from '@utils/customAlert';
 import { socket } from 'socket';
 
 function Game() {
@@ -23,7 +22,7 @@ function Game() {
   const [modalVals] = useRecoilState(stockModalVals); // 모달에 들어가는 값
   const [finish, setFinish] = useRecoilState(finishBackgroundState); // 라운드 종료 여부
   const [round, setRound] = useRecoilState(currentRound); // 현재 라운드
-  const popupRef = useRef<any>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
   const [timer, setTimer] = useState<{
     min: string | undefined;
     sec: string | undefined;
@@ -33,16 +32,11 @@ function Game() {
 
   useEffect(() => {
     socket.emit('room_connect', roomCode); // 방 접속 이벤트
-    socket.on('connectComplete', () => {
-      // 소켓 connect가 완료된 후에 getParticipants 이벤트 emit
-      socket.emit('startTimer', roomCode);
-    });
-
     socket.on('timerStarted', () => {
       // 타이머 시작되면 라운드 시작
       setFinish(false);
     });
-    socket.on('timerTick', (info: any) => {
+    socket.on('timerTick', (info: number) => {
       // 타이머 시간 가는 중 ...
       const { min, sec } = convertSecondsToMinute(info);
       setTimer({ min, sec });
@@ -77,17 +71,27 @@ function Game() {
         }));
       }
     );
-    socket.on('leaveRoomSuccess', () => {
+    socket.on('timerStopped', () => {
       // 유저들이 방에서 빠져나가면 방 제거하라고 알림.
-      networkErrorAlert('사라진 게임방입니다.');
-      setTimeout(() => {
-        navigate('/student', { replace: true });
-      }, 1000);
+      // networkErrorAlert('사라진 게임방입니다.');
+      // setTimeout(() => {
+      //   navigate('/student', { replace: true });
+      // }, 1000);
+      navigate('/student', { replace: true });
     });
+
+    return () => {
+      socket.removeAllListeners();
+    };
   }, []);
 
-  const onClickBlackBackground = (e: any) => {
-    if (!popupRef.current || !popupRef.current.contains(e.target)) {
+  const onClickBlackBackground = (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    if (
+      !popupRef.current ||
+      !popupRef.current.contains(e.target as HTMLDivElement)
+    ) {
       setModalState((pre) => ({
         ...pre,
         visible: false,
