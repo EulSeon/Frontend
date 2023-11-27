@@ -12,6 +12,7 @@ import Wallet from '@pages/student/Wallet';
 import StudentMain from '@pages/student/Main';
 import About from '@pages/About';
 import Contact from '@pages/Contact';
+import ErrorPage from '@pages/404Page';
 
 function App() {
   const socket = () => {
@@ -25,17 +26,19 @@ function App() {
       <GlobalStyle />
       <Router>
         <Routes>
-          <Route path="/" element={<Main />}></Route>
-          <Route path="/about" element={<About />}></Route>
-          <Route path="/contact" element={<Contact />}></Route>
-          <Route path="/room/wait" element={<WaitingRoomLayout />}></Route>
-          <Route path="/room/result" element={<GameResult />}></Route>
+          <Route path="/" element={<Main />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/room/wait" element={<WaitingRoomLayout />} />
+          <Route path="/room/result" element={<GameResult />} />
 
           {/* 학생들 */}
-          <Route path="/student" element={<StudentMain />}></Route>
-          <Route path="/student/wallet" element={<Wallet />}></Route>
-          <Route path="/student/buy" element={<Buy />}></Route>
-          <Route path="/student/sell" element={<Sell />}></Route>
+          <Route path="/student" element={<StudentMain />} />
+          <Route path="/student/wallet" element={<Wallet />} />
+          <Route path="/student/buy" element={<Buy />} />
+          <Route path="/student/sell" element={<Sell />} />
+
+          <Route path={'*'} element={<ErrorPage />} />
         </Routes>
       </Router>
     </>
