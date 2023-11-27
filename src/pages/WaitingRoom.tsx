@@ -162,6 +162,10 @@ function WaitingRoom() {
       // 현재 라운드 받아오기
       setRound(currentRound);
     });
+  }, []);
+
+  useEffect(() => {
+    socket.removeAllListeners('timerEnded');
     socket.on('timerEnded', (currentRound: number) => {
       // 타이머가 끝났을 경우
       setCurrentBtn('gameover');
@@ -170,12 +174,36 @@ function WaitingRoom() {
 
     return () => {
       socket.removeAllListeners('timerEnded');
-      // socket.emit('stopTimer', state.roomPW); // 타이머를 멈추는 이벤트
     };
-  }, []);
+  }, [students]);
 
   // 게임 결과 저장하기
   const _saveGameResult = async (currentRound: number) => {
+    if (students.length < 2) {
+      // 참여인원이 없을 경우 게임 결과를 저장하지 않고 메인 페이지로 이동
+      Swal.fire({
+        position: 'center',
+        title: `게임을 진행하고 있는 유저가 없습니다.`,
+        text: '게임을 종료합니다.',
+        imageUrl: '/images/errorImage.png',
+        imageWidth: 200,
+        imageHeight: 200,
+        showConfirmButton: false,
+        timer: 2300,
+        width: 600,
+        padding: '4em 0rem 4em',
+        showClass: {
+          popup: 'animate__animated animate__fadeInDown',
+        },
+        hideClass: {
+          popup: 'animate__animated animate__fadeOutUp',
+        },
+      });
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 1000);
+      return;
+    }
     const result = await saveGameResult(state.roomPW, {
       round_num: currentRound,
     });
