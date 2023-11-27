@@ -130,7 +130,7 @@ function Main_() {
       if (result === 'start') {
         // 게임 시작일 경우
         navigate('wallet', {
-          state: { roomPW: roomCode },
+          state: { permit: true },
         });
       } else {
         setStudents(result as Students[]);

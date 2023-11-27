@@ -4,14 +4,17 @@ import StudentHeader from '@components/student/header';
 import { useRecoilState } from 'recoil';
 import { stockModalState, stockModalVals } from '@states/modalState';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getUserInfo, purchaseStock } from '@apis/api/wallet';
 import { currentRoomCode, currentRound, roomSet } from '@states/roomSetting';
+import { finishBackgroundState } from '@states/backgroundState';
 import { socket } from 'socket';
 import { useQuery } from 'react-query';
 import { defaultAlert, networkErrorAlert } from '@utils/customAlert';
+import UnusualApproach from '@pages/UnusualApproach';
 
 function Buy() {
+  const { state } = useLocation();
   const navigate = useNavigate();
   const [buyStock, setBuyStock] = useState<string>(''); // 구매할 주식 수
   const [, setModalState] = useRecoilState(stockModalState);
@@ -28,6 +31,16 @@ function Buy() {
   const [roomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
   const [round] = useRecoilState(currentRound); // 현재 라운드
   const [roomSetting] = useRecoilState(roomSet); // 게임방 세팅값
+  const [finish, setFinish] = useRecoilState(finishBackgroundState); // 라운드 종료 여부
+
+  if (!state || !state.permit) {
+    // url 직접 접근 방지
+    return <UnusualApproach />;
+  }
+  if (finish) {
+    // 시간초 끝나는 시점에 페이지 이동하느라 socket timer end가 적용되지 못할 경우를 대비해서 추가
+    navigate(-1);
+  }
 
   const getUserInformation = async () => {
     if (!roomCode) {
@@ -77,7 +90,8 @@ function Buy() {
       setTimer({ min, sec });
     });
     socket.on('timerEnded', () => {
-      navigate('/student/wallet'); // 라운드 종료시 게임방 메인페이지로 이동
+      setFinish(true);
+      navigate('/student/wallet', { state: { permit: true } }); // 라운드 종료시 게임방 메인페이지로 이동
     });
     socket.on('timerStopped', () => {
       // 유저들이 방에서 빠져나가면 방 제거하라고 알림.

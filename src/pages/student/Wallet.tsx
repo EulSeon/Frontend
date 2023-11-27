@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { css, keyframes, styled } from 'styled-components';
 import StudentHeader from '@components/student/header';
 import StudentLayout_ from '@components/student/layout';
@@ -14,8 +14,10 @@ import { roomSet, currentRoomCode, currentRound } from '@states/roomSetting';
 import convertSecondsToMinute from '@utils/convertSecondsToMinute';
 // import { networkErrorAlert } from '@utils/customAlert';
 import { socket } from 'socket';
+import UnusualApproach from '@pages/UnusualApproach';
 
 function Game() {
+  const { state } = useLocation();
   const navigate = useNavigate();
   const [selectedNav] = useRecoilState(navbarState);
   const [modalState, setModalState] = useRecoilState(stockModalState); // 모달 visible 상태
@@ -29,6 +31,11 @@ function Game() {
   }>({ min: undefined, sec: undefined }); // 타이머 시간
   const [roomCode] = useRecoilState(currentRoomCode); // 전역 변수 방코드
   const [roomSetting, setRoomSetting] = useRecoilState(roomSet);
+
+  if (!state || !state.permit) {
+    // url 직접 접근 방지
+    return <UnusualApproach />;
+  }
 
   useEffect(() => {
     socket.emit('room_connect', roomCode); // 방 접속 이벤트
@@ -203,7 +210,7 @@ function Game() {
                   visible: false,
                 });
                 setTimeout(() => {
-                  navigate('/student/buy');
+                  navigate('/student/buy', { state: { permit: true } });
                 }, 500);
               }}
             >
@@ -216,7 +223,7 @@ function Game() {
                   visible: false,
                 });
                 setTimeout(() => {
-                  navigate('/student/sell');
+                  navigate('/student/sell', { state: { permit: true } });
                 }, 500);
               }}
             >
@@ -233,7 +240,7 @@ function Game() {
                   visible: false,
                 });
                 setTimeout(() => {
-                  navigate('/student/buy');
+                  navigate('/student/buy', { state: { permit: true } });
                 }, 500);
               }}
             >
