@@ -39,6 +39,7 @@ function Game() {
 
   useEffect(() => {
     socket.emit('room_connect', roomCode); // 방 접속 이벤트
+    socket.emit('get_round', roomCode); // 라운드 요청 이벤트
     socket.on('timerStarted', () => {
       // 타이머 시작되면 라운드 시작
       setFinish(false);
